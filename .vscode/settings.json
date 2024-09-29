@@ -1,0 +1,16 @@
+{
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit",
+    "quickfix.biome": "explicit"
+  },
+  // The path to the `bun` executable.
+  "bun.runtime": "/Users/sebastianwessel/.bun/bin/bun",
+
+  // If support for Bun should be added to the default "JavaScript Debug Terminal".
+  "bun.debugTerminal.enabled": true,
+
+  // If the debugger should stop on the first line of the program.
+  "bun.debugTerminal.stopOnEntry": false
+}

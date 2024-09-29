@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your App Title</title>
+    <script lang="javascript">
+      function copyToClipBoard (element){
+        const parentDiv = element.parentElement;
+        const clipboardText = parentDiv.getAttribute('data-clipboard-text');
+        if (clipboardText) {
+          navigator.clipboard.writeText(clipboardText)
+        }
+      }
+
+      function askChat(element,filename){
+        const parentDiv = element.parentElement;
+        const code = parentDiv.getAttribute('data-clipboard-text');
+        if (code) {
+          window.backbone.emit('ask_chat',{code,filename})
+        }
+      }
+
+      function applyCode(element,filename){
+        const parentDiv = element.parentElement;
+        const code = parentDiv.getAttribute('data-clipboard-text');
+        if (code) {
+          window.backbone.emit('apply_code_to_file',{code,filename})
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
