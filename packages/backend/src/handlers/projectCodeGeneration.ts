@@ -18,7 +18,7 @@ const fillInTheMiddleCodeRoute = createRoute({
   path: '/{projectId}/fill-middle-code',
   security: [{ Bearer: [] }],
   description: 'One time shoot for fill in the middle (autocomplete) tasks',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),
@@ -67,7 +67,7 @@ const generateCodeRoute = createRoute({
   security: [{ Bearer: [] }],
   description:
     'One time shoot for generating code or fill in the middle (autocomplete) tasks. Send a message to the project generate and receive a response via SSE',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),

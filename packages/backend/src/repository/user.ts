@@ -2,11 +2,12 @@ import { RecordId, Table } from 'surrealdb'
 import { getDb } from '../db'
 import logger from '../logger'
 
-export type User = {
+export type UserDb = {
   id: RecordId
   email: string
   name: string
-  created: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export const userTable = new Table('user')
@@ -15,8 +16,8 @@ export const userRepository = {
   getUserByEmailAndPassword: async (email: string, password: string) => {
     try {
       const db = await getDb()
-      const result = await db.query<User[]>(
-        'SELECT id, name, email, created FROM ONLY user WHERE email = $email AND crypto::argon2::compare(password,$password) LIMIT 1',
+      const result = await db.query<[UserDb]>(
+        'SELECT id, name, email, created FROM ONLY user WHERE email = string::lowercase($email) AND crypto::argon2::compare(password,$password) LIMIT 1',
         { email: email.toLowerCase().trim(), password: password.trim() }
       )
 
@@ -32,7 +33,7 @@ export const userRepository = {
   },
   getUserById: async (id: string) => {
     const db = await getDb()
-    const result = (await db.select<User>(new RecordId(userTable.tb, id))) as unknown as User
+    const result = await db.select<UserDb>(new RecordId(userTable.tb, id))
 
     if (!result) {
       return undefined

@@ -1,4 +1,4 @@
-import { type ManifestConfig, availableIconPacks, generateManifest } from 'material-icon-theme'
+import { type ManifestConfig, generateManifest } from 'material-icon-theme'
 
 const config: ManifestConfig = {
   activeIconPack: 'vue',
@@ -70,7 +70,9 @@ export const filenameToIcon = (
 
   const fileNameSplitted = filename.split('.')
   if (fileNameSplitted.length > 2) {
-    const doubleExt = `${fileNameSplitted[fileNameSplitted.length - 2]}.${fileNameSplitted[fileNameSplitted.length - 1]}`
+    const doubleExt = `${fileNameSplitted[fileNameSplitted.length - 2]}.${
+      fileNameSplitted[fileNameSplitted.length - 1]
+    }`
     if (iconManifest.fileExtensions?.[doubleExt]) {
       return iconManifest.fileExtensions?.[doubleExt]
     }

@@ -1,30 +1,6 @@
 import { config } from '../config.js'
 import { getNewLLM } from './getNewLLM.js'
 
-/*
-const extractMiddlePart = (
-  original: string,
-  completion: string,
-  prefix: string,
-  suffix: string
-): string => {
-  // Extract the part of the completion that comes after the prefix and before the suffix
-  let startIndex = 0
-  if (completion.startsWith(prefix)) {
-    console.log('starts with')
-    startIndex = completion.indexOf(prefix) + prefix.length
-  }
-
-  let endIndex = completion.length - 1
-  if (completion.endsWith(suffix)) {
-    endIndex = completion.length - 1 - suffix.length - 1
-  }
-
-  // Return the middle part (filled content)
-  return completion.slice(startIndex, endIndex).trim()
-}
-*/
-
 export const fillInTheMiddleCode = async (
   projectId: string,
   content: string,
@@ -41,9 +17,9 @@ export const fillInTheMiddleCode = async (
         content: `You are a ${language} code generator wich fills in the middle marked as <FIM>.
 The users language is english.
 Return only the code which is replacing <FIM>.
-If you can not fill in the middle, return a empty response.
-Do not return the content before or after <FIM>.
-Return the only code as plain text.
+If you can not fill in the middle or it is an empty string, return only the word FAILED.
+NEVER return the content before or after <FIM>.
+Return the only code of <FIM> as plain text.
 `,
       },
       { role: 'user', content: `${content}<FIM>${suffix}` },
@@ -60,7 +36,7 @@ Return the only code as plain text.
 
   const match = answer.match(regex)
 
-  return match ? match[1] : answer
+  const fim = match ? match[1] : answer
 
-  //return extractMiddlePart(`${content}${suffix}`, fullContent, content, suffix)
+  return fim.trim().toUpperCase() === 'FAILED' ? '' : fim
 }

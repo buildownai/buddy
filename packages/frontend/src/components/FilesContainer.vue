@@ -7,7 +7,7 @@
         v-for="tab in tabs"
         :key="tab.path"
         :title="tab.path"
-        class="px-2 py-2 text-sm font-medium flex border-r dark:border-r-gray-700"
+        class="pl-2 pr-6 py-2 text-sm font-medium flex border-r dark:border-r-gray-700"
         :class="[
           activeTab?.path === tab.path
             ? 'border-b-2 border-b-blue-500'
@@ -23,7 +23,7 @@
       >
         <img
           :src="`/icons/${filenameToIcon(tab.name, false, false)}.svg`"
-          class="w-5 h-5 mr-1"
+          class="w-15 h-5 mr-1"
         />
         <div
           class="cursor-pointer text-nowrap"
@@ -49,112 +49,121 @@
 
 <script setup lang="ts">
 type TabEntry = {
-  name: string;
-  path: string;
-};
+  name: string
+  path: string
+}
 
-import { onBeforeMount, onMounted, ref, onBeforeUnmount } from "vue";
-import { filenameToIcon } from "../helper/filenameToIcon.js";
-import { createBrowserEnv } from "../store/browserEnv.js";
-import { removeState, createState, hasState } from "../store/editorStates.js";
-import CodeEditor from "./CodeEditor.vue";
-import { ProjectApi } from "../client/project.js";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue'
+import { backbone } from '../backbone/index.js'
+import { ProjectApi } from '../client/project.js'
+import { filenameToIcon } from '../helper/filenameToIcon.js'
+import { createBrowserEnv } from '../store/browserEnv.js'
+import { createState, hasState, removeState } from '../store/editorStates.js'
+import CodeEditor from './CodeEditor.vue'
 
 const props = defineProps<{
-  projectId: string;
-}>();
+  projectId: string
+}>()
 
 // Define tabs
-const tabs = ref<TabEntry[]>([]);
+const tabs = ref<TabEntry[]>([])
 
 onBeforeMount(async () => {
-  await createBrowserEnv(props.projectId);
-});
+  await createBrowserEnv(props.projectId)
+})
 
 onBeforeUnmount(() => {
-  window.backbone.off("apply_code_to_file");
-  window.backbone.off("open_file");
-});
+  backbone.off('apply_code_to_file')
+  backbone.off('open_file')
+  backbone.off('save_file')
+})
 
 onMounted(() => {
-  window.backbone.on("open_file", async (event) => {
-    const path = event.path;
-    const s = path.split("/");
-    const name = s[s.length - 1];
+  backbone.on('open_file', async (event) => {
+    const path = event.path
+    const s = path.split('/')
+    const name = s[s.length - 1]
     if (hasState(props.projectId, path)) {
-      setActiveTab(path, name);
-      return;
+      setActiveTab(path, name)
+      return
     }
     ProjectApi.getFile(props.projectId, path)
       .then((content) => {
-        createState(props.projectId, path, content);
-        setActiveTab(path, name);
+        createState(props.projectId, path, content)
+        setActiveTab(path, name)
         // add merge function
       })
       .catch((err) => {
-        createState(props.projectId, path, event.code);
-        setActiveTab(path, name);
-      });
-  });
+        createState(props.projectId, path, event.code)
+        setActiveTab(path, name)
+      })
+  })
 
-  window.backbone.on("apply_code_to_file", async (event) => {
-    const path = event.filename;
-    const s = path.split("/");
-    const name = s[s.length - 1];
+  backbone.on('apply_code_to_file', async (event) => {
+    const path = event.filename
+    const s = path.split('/')
+    const name = s[s.length - 1]
     if (hasState(props.projectId, path)) {
-      setActiveTab(path, name);
+      setActiveTab(path, name)
       // add merge function
-      return;
+      return
     }
     ProjectApi.getFile(props.projectId, path)
       .then((content) => {
-        createState(props.projectId, path, content);
-        setActiveTab(path, name);
+        createState(props.projectId, path, content)
+        setActiveTab(path, name)
         // add merge function
       })
       .catch((err) => {
-        createState(props.projectId, path, event.code);
-        setActiveTab(path, name);
-      });
-  });
-});
+        createState(props.projectId, path, event.code)
+        setActiveTab(path, name)
+      })
+  })
+
+  backbone.on('save_file', async (event) => {
+    ProjectApi.putFile(props.projectId, event.filename, event.code).catch((err) => {
+      console.error(err, 'Failed to save file')
+      alert('Failed to save file')
+    })
+  })
+})
 
 // State for the active tab
-const activeTab = ref<TabEntry | undefined>();
+const activeTab = ref<TabEntry | undefined>()
 
 const closeActiveTab = (path: string) => {
-  let currentIndex = 0;
+  let currentIndex = 0
   tabs.value = tabs.value.filter((tab, index) => {
-    const isMatching = tab.path !== path;
+    const isMatching = tab.path !== path
     if (isMatching) {
-      currentIndex = index;
-      removeState(props.projectId, path);
+      currentIndex = index
+      removeState(props.projectId, path)
     }
-    return isMatching;
-  });
+    return isMatching
+  })
 
   if (tabs.value.length - 1 < currentIndex) {
-    currentIndex = tabs.value.length - 1;
+    currentIndex = tabs.value.length - 1
   }
 
   if (currentIndex < 0) {
-    activeTab.value = undefined;
+    activeTab.value = undefined
   } else {
-    setActiveTab(tabs.value[currentIndex].path, tabs.value[currentIndex].name);
+    setActiveTab(tabs.value[currentIndex].path, tabs.value[currentIndex].name)
   }
-};
+}
 
 // Method to set the active tab
 const setActiveTab = async (path: string, name: string) => {
-  let existing = tabs.value.find((tab) => tab.path === path);
+  let existing = tabs.value.find((tab) => tab.path === path)
   if (!existing) {
-    existing = { name, path };
-    tabs.value.push(existing);
+    existing = { name, path }
+    tabs.value.push(existing)
   }
-  activeTab.value = existing;
-};
+  activeTab.value = existing
+}
 
 defineExpose({
   setActiveTab,
-});
+})
 </script>

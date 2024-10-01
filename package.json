@@ -2,9 +2,7 @@
   "name": "@buildownai/pilot",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "type": "module",
   "scripts": {
     "start:frontend": "bun run --cwd packages/frontend dev",
@@ -16,6 +14,6 @@
     "db": "docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root --allow-all memory"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.2"
+    "@biomejs/biome": "^1.9.3"
   }
 }

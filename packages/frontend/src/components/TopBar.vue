@@ -4,7 +4,9 @@
       <div class="flex justify-between h-16">
         <div class="flex">
           <div class="flex-shrink-0 flex items-center">
-            <h1 class="text-xl font-bold text-gray-800 dark:text-white">{{ title }}</h1>
+            <h1 class="text-xl font-bold text-gray-800 dark:text-white">
+              {{ title }}
+            </h1>
           </div>
         </div>
         <div class="flex items-center">
@@ -41,37 +43,37 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { useRouter } from 'vue-router'
-import { AuthApi } from '../client/index.js'
-import { useTheme } from '../store/index.js'
+import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
+import { AuthApi } from "../client/index.js";
+import { useTheme } from "../store/index.js";
 
 export default defineComponent({
-  name: 'Topbar',
+  name: "Topbar",
   props: {
     title: {
       type: String,
-      default: 'TS-Wizard',
+      default: "BuildOwn.AI Pilot",
     },
   },
   setup() {
-    const router = useRouter()
+    const router = useRouter();
 
-    const { toggleDarkmode } = useTheme()
+    const { toggleDarkmode } = useTheme();
 
     const logout = async () => {
       try {
-        await AuthApi.logout()
-        router.push('/')
+        await AuthApi.logout();
+        router.push("/");
       } catch (error) {
-        console.error('Logout failed:', error)
+        console.error("Logout failed:", error);
       }
-    }
+    };
 
     return {
       toggleDarkmode,
       logout,
-    }
+    };
   },
-})
+});
 </script>

@@ -1,16 +1,14 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import { streamSSE } from 'hono/streaming'
 
-import { config } from '../../config.js'
 import { generateSystemPromptContext } from '../../llm/generateSystemPromptContext.js'
-import { pullModel } from '../../llm/ollama.js'
 import logger from '../../logger.js'
 import { projectRepository } from '../../repository/project.js'
+import { taskRepository } from '../../repository/task.js'
 import type { SSEMessage, SendProgress } from '../../types/index.js'
 import { errorResponse } from '../errorResponse.js'
 import { cloneRepo } from './cloneRepo.js'
 import { fetchDependencyTypes } from './fetchDependencyTypes.js'
-import { indexRepo } from './indexRepo.js'
 
 const app = new OpenAPIHono()
 
@@ -50,9 +48,11 @@ const crawlRoute = createRoute({
       content: {
         'application/json': {
           schema: z.object({
+            localFolder: z.string().optional().describe('The local file directory'),
             repoUrl: z
               .string()
               .url()
+              .optional()
               .describe('The URL of the Git repository to clone and analyze'),
           }),
           example: {
@@ -94,7 +94,7 @@ const crawlRoute = createRoute({
 })
 
 app.openapi(crawlRoute, async (c) => {
-  const { repoUrl } = c.req.valid('json')
+  const { repoUrl, localFolder } = c.req.valid('json')
   const { id: userId } = c.get('jwtPayload')
 
   logger.info({ repoUrl }, 'Starting repository crawl')
@@ -116,13 +116,7 @@ app.openapi(crawlRoute, async (c) => {
         event: 'info',
         message: 'Starting repository analysis',
         totalSteps: 4,
-        steps: [
-          'Clone repository',
-          'Pull main model',
-          'Pull embedding model',
-          'Fetch typescript typings',
-          'Index repository',
-        ],
+        steps: ['Clone repository', 'Generate project description', 'Fetch typescript typings'],
       }
       await stream.writeSSE({
         data: JSON.stringify(infoMsg),
@@ -132,54 +126,35 @@ app.openapi(crawlRoute, async (c) => {
 
       // Step 1: Clone repository
       await sendProgress('Cloning repository...', 0, 'Clone repository')
-      const { clonePath,projectId } = await cloneRepo(userId, repoUrl, (message, progress) =>
-        sendProgress(message, progress, 'Clone repository')
+      const { clonePath, projectId } = await cloneRepo(
+        userId,
+        repoUrl,
+        localFolder,
+        (message, progress) => sendProgress(message, progress, 'Clone repository')
       )
       await sendProgress('Repository cloned successfully', 100, 'Clone repository')
 
-      // Step 2: Pull main model
-      await sendProgress('Pulling main model...', 0, 'Pull main model')
-      await pullModel(config.llm.models.chat, (message, progress) =>
-        sendProgress(message, progress, 'Pull main model')
-      )
-      await sendProgress('Main model pulled successfully', 100, 'Pull main model')
+      await taskRepository.createIndexNewProjectTasks(projectId)
 
-      // Step 3: Pull coding model
-      await sendProgress('Pulling main model...', 0, 'Pull coding model')
-      await pullModel(config.llm.models.code, (message, progress) =>
-        sendProgress(message, progress, 'Pull coding model')
-      )
-      await sendProgress('Main model pulled successfully', 100, 'Pull main model')
+      // Step 2: Generate project settings
+      await sendProgress('Generating project description...', 0, 'Generate project description')
+      const description = await generateSystemPromptContext(clonePath)
+      await projectRepository.updateProject(projectId, { description })
+      await sendProgress('Project description generated', 100, 'Generate project description')
 
-      // Step 4: Pull embedding model
-      await sendProgress('Pulling embedding model...', 0, 'Pull embedding model')
-      await pullModel(config.llm.models.embeddings, (message, progress) =>
-        sendProgress(message, progress, 'Pull embedding model')
-      )
-      await sendProgress('Embedding model pulled successfully', 100, 'Pull embedding model')
-
-      // Step 5: Pull get project settings
-      await sendProgress('Generating project description...', 0, 'Project description')
-      const description = await generateSystemPromptContext(clonePath);
-      await projectRepository.updateProject(projectId,{description})
-      await sendProgress('Project description generated', 100, 'Project description')
-
-      // Step 6: Fetch typescript typings
+      // Step 3: Fetch typescript typings
       await sendProgress('Fetching typescript types...', 0, 'Fetch typescript typings')
       await fetchDependencyTypes(clonePath, (message, progress) =>
         sendProgress(message, progress, 'Fetch typescript typings')
       )
       await sendProgress('Typescript types fetched successfully', 100, 'Fetch typescript typings')
 
-      // Step 7: Index repository
-      await sendProgress('Indexing repository...', 0, 'Index repository')
-      await indexRepo(clonePath, (message, progress) =>
-        sendProgress(message, progress, 'Index repository')
-      )
-      await sendProgress('Repository indexed successfully', 100, 'Index repository')
-
       // Analysis complete
-      const completeMsg: SSEMessage = { event: 'complete', message: 'Analysis complete', projectId }
+      const completeMsg: SSEMessage = {
+        event: 'complete',
+        message: 'Analysis complete',
+        projectId,
+      }
       await stream.writeSSE({
         data: JSON.stringify(completeMsg),
         event: 'complete',
@@ -206,7 +181,7 @@ app.openapi(crawlRoute, async (c) => {
     } finally {
       stream.close()
     }
-  })
+  }) as any
 })
 
 export { app as crawlRepository }

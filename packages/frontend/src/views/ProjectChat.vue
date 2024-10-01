@@ -119,71 +119,71 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import Vue3TreeView from "vue3-tree-vue";
-import ChatPane from "../components/ChatPane.vue";
-import FilesContainer from "../components/FilesContainer.vue";
-import LoaderAnimation from "../components/LoaderAnimation.vue";
-import { filenameToIcon } from "../helper/filenameToIcon.js";
-import { useAuth } from "../store/index.js";
+import { onMounted, ref } from 'vue'
+import Vue3TreeView from 'vue3-tree-vue'
+import ChatPane from '../components/ChatPane.vue'
+import FilesContainer from '../components/FilesContainer.vue'
+import LoaderAnimation from '../components/LoaderAnimation.vue'
+import { filenameToIcon } from '../helper/filenameToIcon.js'
+import { useAuth } from '../store/index.js'
 
-import { Pane, Splitpanes } from "splitpanes";
-import { useRouter } from "vue-router";
-import { AuthApi, ProjectApi } from "../client/index.js";
-import { useTheme } from "../store/index.js";
-import type { TreeViewItem } from "../types/file.js";
+import { Pane, Splitpanes } from 'splitpanes'
+import { useRouter } from 'vue-router'
+import { AuthApi, ProjectApi } from '../client/index.js'
+import { useTheme } from '../store/index.js'
+import type { TreeViewItem } from '../types/file.js'
 
 const props = defineProps<{
-  projectId: string;
-}>();
+  projectId: string
+}>()
 
-const { getTokens } = useAuth();
-const router = useRouter();
-const { toggleDarkmode, isDarkmode } = useTheme();
+const { getTokens } = useAuth()
+const router = useRouter()
+const { toggleDarkmode, isDarkmode } = useTheme()
 
 const logout = async () => {
   try {
-    await AuthApi.logout();
-    router.push("/");
+    await AuthApi.logout()
+    router.push('/')
   } catch (error) {
-    console.error("Logout failed:", error);
+    console.error('Logout failed:', error)
   }
-};
+}
 
-const pageReady = ref(false);
+const pageReady = ref(false)
 
-const files = ref<TreeViewItem[]>([]);
+const files = ref<TreeViewItem[]>([])
 
 const loadTree = async () => {
-  files.value = await ProjectApi.getProjectFileTree(props.projectId);
-};
+  files.value = await ProjectApi.getProjectFileTree(props.projectId)
+}
 
 onMounted(async () => {
-  await loadTree();
-  pageReady.value = true;
-});
+  await loadTree()
+  pageReady.value = true
+})
 
 const handleSelectFile = async (item: TreeViewItem) => {
   if (item.meta.isDirectory) {
-    item.expanded = !item.expanded;
-    return;
+    item.expanded = !item.expanded
+    return
   }
-  window.backbone.emit("open_file", { path: item.meta.path });
-};
+  window.backbone.emit('open_file', { path: item.meta.path })
+}
 
 const handleMoveFile = async (oldPath: string, newPath: string) => {
   // Implement your file moving logic here
-  console.log(`Moving file from ${oldPath} to ${newPath}`);
+  console.log(`Moving file from ${oldPath} to ${newPath}`)
   // You might want to call an API to perform the actual file move
   // After successful move, you may want to refresh the file tree
-};
+}
 
 const handleDeleteFile = async (path: string) => {
   // Implement your file deletion logic here
-  console.log(`Deleting file: ${path}`);
+  console.log(`Deleting file: ${path}`)
   // You might want to call an API to perform the actual file deletion
   // After successful deletion, you may want to refresh the file tree
-};
+}
 </script>
 
 <style scoped>

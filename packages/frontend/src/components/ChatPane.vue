@@ -44,6 +44,7 @@
           v-for="conversation of conversations"
           :key="conversation.id"
           class="w-full cursor-pointer"
+          @click="loadConversation(conversation.id)"
         >
           <div class="w-full font-bold text-gray-200">
             {{ toDateString(conversation.createdAt) }}
@@ -60,7 +61,10 @@
 </template>
 <script setup lang="ts">
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { nextTick, onMounted, ref, watch, onBeforeUnmount } from "vue";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { backbone } from "../backbone/index.js";
 import { BaseApi } from "../client/base.js";
 import { ChatApi, ConversationHistory } from "../client/index.js";
 import { useAuth } from "../store/index.js";
@@ -68,9 +72,6 @@ import { ChatMessage, SSEChatMessage } from "../types/chat.js";
 import ChatInput from "./ChatInput.vue";
 import MessageList from "./MessageList.vue";
 import RobotThinking from "./RobotThinking.vue";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { backbone } from "../backbone/index.js";
 
 dayjs.extend(relativeTime);
 
@@ -109,11 +110,20 @@ const showChat = async () => {
 };
 
 const showNewChat = async () => {
+  messages.value = [];
+  conversationId.value = undefined;
   await showChat();
 };
 
-onMounted(async () => {
+const loadConversation = async (id: string) => {
+  const conversation = await ChatApi.getConversation(props.projectId, id);
+  messages.value = conversation.messages;
+  conversationId.value = conversation.id;
+  await showChat();
   scrollToBottom();
+};
+
+onMounted(async () => {
   chatInput.value?.focus();
   const recentConversation = await ChatApi.getRecentConversation(
     props.projectId
@@ -128,6 +138,7 @@ onMounted(async () => {
     }
     chatMessageContext.value += `\n You generated this code\n\n\`\`\`\n${event.code}\n\`\`\``;
   });
+  scrollToBottom();
 });
 
 onBeforeUnmount(() => {

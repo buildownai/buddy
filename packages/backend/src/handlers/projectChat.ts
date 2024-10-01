@@ -19,7 +19,7 @@ const chatRoute = createRoute({
   security: [{ Bearer: [] }],
   description:
     'Conversational chat with the project agent. Send a message to the project chat and receive a response via SSE',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),
@@ -64,7 +64,7 @@ app.openapi(chatRoute, async (c) => {
     conversationId = await chatHistoryRepository.startChatConversation(projectId)
   }
 
-  logger.info({ projectId, conversationId }, 'Starting chat response generation')
+  logger.debug({ projectId, conversationId }, 'Starting chat response generation')
 
   return streamSSE(
     c,
@@ -126,7 +126,7 @@ const chatHistoriesRoute = createRoute({
   path: '/{projectId}/chat/history',
   security: [{ Bearer: [] }],
   description: 'Gets the all conversational chats for current user and current project',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),
@@ -175,7 +175,7 @@ const chatHistoryRoute = createRoute({
   path: '/{projectId}/chat/history/{conversationId}',
   security: [{ Bearer: [] }],
   description: 'Gets the full single history of a conversational chat',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),
@@ -229,7 +229,7 @@ const chatRecentConversationRoute = createRoute({
   path: '/{projectId}/chat',
   security: [{ Bearer: [] }],
   description: 'Gets the full single history of a conversational chat',
-  tags: ['Project', 'AI-Chat'],
+  tags: ['AI-Chat'],
   request: {
     params: z.object({
       projectId: z.string().describe('The ID of the project'),

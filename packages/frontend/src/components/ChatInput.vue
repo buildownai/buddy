@@ -61,43 +61,43 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
-  isLoading: boolean;
-}>();
+  isLoading: boolean
+}>()
 
 const emit = defineEmits<{
-  (e: "send-message", message: string): void;
-  (e: "update:isLoading", value: boolean): void;
-  (e: "abort", value: boolean): void;
-}>();
+  (e: 'send-message', message: string): void
+  (e: 'update:isLoading', value: boolean): void
+  (e: 'abort', value: boolean): void
+}>()
 
-const inputMessage = ref("");
-const inputElement = ref<HTMLTextAreaElement | null>(null);
+const inputMessage = ref('')
+const inputElement = ref<HTMLTextAreaElement | null>(null)
 
-const context = ref<string[]>([]);
+const context = ref<string[]>([])
 
 const rows = computed(() => {
-  const l = inputMessage.value.split("\n").length;
-  return l > 5 ? 5 : l;
-});
+  const l = inputMessage.value.split('\n').length
+  return l > 5 ? 5 : l
+})
 
 const sendMessage = () => {
   if (inputMessage.value.trim() && !props.isLoading) {
-    emit("update:isLoading", true);
-    emit("send-message", inputMessage.value.trim());
-    inputMessage.value = "";
+    emit('update:isLoading', true)
+    emit('send-message', inputMessage.value.trim())
+    inputMessage.value = ''
   }
-};
+}
 
 const abort = () => {
-  emit("abort", true);
-};
+  emit('abort', true)
+}
 
 const focus = () => {
-  inputElement.value?.focus();
-};
+  inputElement.value?.focus()
+}
 
-defineExpose({ focus });
+defineExpose({ focus })
 </script>

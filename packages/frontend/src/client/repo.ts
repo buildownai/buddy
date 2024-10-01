@@ -12,11 +12,14 @@ export interface ChatEvent {
 }
 
 export class RepoApi extends BaseApi {
-  static async *analyzeRepo(repoUrl: string): AsyncGenerator<AnalysisEvent, void, unknown> {
+  static async *analyzeRepo(
+    repoUrl: string,
+    name: string
+  ): AsyncGenerator<AnalysisEvent, void, unknown> {
     const response = await RepoApi.fetch('/v1/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repoUrl }),
+      body: JSON.stringify({ repoUrl, name }),
     })
 
     if (!response.body) {

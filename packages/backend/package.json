@@ -14,7 +14,7 @@
     "ollama": "^0.5.9",
     "pino": "^9.4.0",
     "simple-git": "^3.27.0",
-    "surrealdb": "^1.0.1",
+    "surrealdb": "^1.0.4",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
   },

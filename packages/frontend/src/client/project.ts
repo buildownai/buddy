@@ -14,20 +14,18 @@ export class ProjectApi extends BaseApi {
   }
 
   static async getFile(projectId: string, path: string): Promise<string> {
-    const response = await ProjectApi.fetch(`/v1/projects/${projectId}/files/${path}`)
+    const p = path.startsWith('/') ? path.slice(1) : path
+    const response = await ProjectApi.fetch(`/v1/projects/${projectId}/files/${p}`)
     return response.text()
   }
 
-  static async getCompletion(projectId: string, message: string, suffix: string, language: string) {
-    const response = await ProjectApi.fetch(`/v1/projects/${projectId}/fill-middle-code`, {
-      method: 'post',
+  static async putFile(projectId: string, path: string, content: string): Promise<void> {
+    const p = path.startsWith('/') ? path.slice(1) : path
+    const response = await ProjectApi.fetch(`/v1/projects/${projectId}/files/${p}`, {
+      method: 'put',
       body: JSON.stringify({
-        message,
-        suffix,
-        language,
+        content,
       }),
     })
-    const complete = await response.text()
-    return complete
   }
 }

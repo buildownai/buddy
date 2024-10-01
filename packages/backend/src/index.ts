@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { apiReference } from '@scalar/hono-api-reference'
 import { jwt } from 'hono/jwt'
 import type { HTTPResponseError } from 'hono/types'
+import { startBackgroundJobRunner } from './backgroundJob/startBackgroundJobRunner.js'
 import { config } from './config.js'
 import { connectDb, migrateDb } from './db.js'
 import { auth } from './handlers/auth.js'
@@ -12,6 +13,7 @@ import { projectChat } from './handlers/projectChat.js'
 import { projectCodeGeneration } from './handlers/projectCodeGeneration.js'
 import { projectFiles } from './handlers/projectFiles.js'
 import { projects } from './handlers/projects.js' // Add this import
+import { pullModel } from './llm/ollama.js'
 import logger from './logger.js'
 import type { JWTPayload } from './types/index.js'
 
@@ -36,11 +38,14 @@ app.openAPIRegistry.registerComponent('securitySchemes', 'Bearer', {
 app.doc31('/api/openapi.json', {
   openapi: '3.1.0',
   info: {
-    title: 'TS Wizard API',
+    title: 'BuildOwn.AI Pilot',
     version: 'v1',
   },
   tags: [
-    { name: 'Auth', description: 'Authorization endpoints. Login and refresh token endpoints' },
+    {
+      name: 'Auth',
+      description: 'Authorization endpoints. Login and refresh token endpoints',
+    },
     {
       name: 'Project',
       description:
@@ -55,7 +60,10 @@ app.doc31('/api/openapi.json', {
       description:
         'Interacting with the project file system. Create, delete and update files and folders of the project',
     },
-    { name: 'User', description: 'Endpoints to handle user and their information' },
+    {
+      name: 'User',
+      description: 'Endpoints to handle user and their information',
+    },
     {
       name: 'Internal',
       description: 'Technical endpoints like health, which are not part of the core functionality',
@@ -99,6 +107,30 @@ try {
   logger.error({ err }, 'Unable to connect to db')
   process.exit(1)
 }
+
+logger.info('Checking LLM')
+
+await pullModel(config.llm.models.chat, async (message, progress) => {
+  logger.debug({ progress, model: config.llm.models.chat }, `chat model: ${message}`)
+})
+
+await pullModel(config.llm.models.code, async (message, progress) => {
+  logger.debug({ progress, model: config.llm.models.code }, `code model: ${message}`)
+})
+
+await pullModel(config.llm.models.small, async (message, progress) => {
+  logger.debug({ progress, model: config.llm.models.small }, `small model: ${message}`)
+})
+
+await pullModel(config.llm.models.html, async (message, progress) => {
+  logger.debug({ progress, model: config.llm.models.html }, `html2md model: ${message}`)
+})
+
+await pullModel(config.llm.models.embeddings, async (message, progress) => {
+  logger.debug({ progress, model: config.llm.models.embeddings }, `embedding model: ${message}`)
+})
+
+startBackgroundJobRunner()
 
 const port = config.port
 logger.info(`Server is running on port ${port}`)

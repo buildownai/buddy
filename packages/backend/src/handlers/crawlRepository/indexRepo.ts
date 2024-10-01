@@ -3,8 +3,10 @@ import path, { extname, join } from 'node:path'
 import { RecordId } from 'surrealdb'
 import { config } from '../../config.js'
 import { getDb } from '../../db.js'
-import { generateSrcFileDescription, getEmbeddings } from '../../llm/index.js'
+import { codeFileExtension } from '../../defaults/codeFileExtensions.js'
+import { generateSrcFileDescription } from '../../llm/index.js'
 import logger from '../../logger.js'
+import { knowledgeRepository } from '../../repository/knowledge.js'
 import {
   type CodeDescriptionKnowledge,
   KnowledgeType,
@@ -40,31 +42,18 @@ const getLanguageFromFileName = (file: string) => {
       return 'js'
     case '.mts':
       return 'js'
-    /*
-    case '.md':
-      return 'markdown'
-    case '.html':
-      return 'html'
-    case '.htm':
-      return 'html'
-      */
     default:
       return undefined
   }
 }
 
-export const generateCodeDocVectors = async (
-  projectId: string,
-  insertChunk: (docs: CodeDescriptionKnowledge[]) => Promise<void>
-) => {
+export const generateCodeDocVectors = async (projectId: string) => {
   const rootDir = join(config.tempDir, projectId)
 
   const walkDirectory = async (dir: string, parentPath: string) => {
     const currentDir = join(parentPath, dir)
     const absolutePathBase = join(rootDir, currentDir)
     const files = readdirSync(absolutePathBase)
-
-    const fileBuckets: CodeDescriptionKnowledge[] = []
 
     for (const file of files) {
       if (['.git', 'node_modules', '.DS_Store', '.zed', '.vscode'].includes(file)) {
@@ -79,10 +68,11 @@ export const generateCodeDocVectors = async (
       } else {
         logger.debug({ relativePath }, 'Indexing file')
 
-        const lng = getLanguageFromFileName(file)
-        if (lng) {
+        // index only source files
+        if (codeFileExtension.includes(extname(file))) {
           const s = file.split('.')
           if (s.length >= 3) {
+            // skip indexing of test files (.spec.* and .test.*)
             if (['spec', 'test'].includes(s[s.length - 2].trim().toLowerCase())) {
               continue
             }
@@ -90,14 +80,12 @@ export const generateCodeDocVectors = async (
 
           const sourceCode = readFileSync(absolutePath).toString('utf-8')
           const pageContent = await generateSrcFileDescription(sourceCode, relativePath)
-          const embedding = await getEmbeddings(`search_document: ${pageContent}`)
 
-          await insertChunk({
+          await knowledgeRepository.addKnowledge({
             kind: KnowledgeType.CODE_DESCRIPTION,
             pageContent,
             project: new RecordId('project', projectId),
-            file: relativePath,
-            embedding,
+            file: `/${relativePath}`,
           })
         }
       }
