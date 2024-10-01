@@ -297,7 +297,7 @@ app.openapi(putFile, async (c) => {
 
   try {
     await Bun.write(file, content)
-    await taskRepository.addFileIndexTask(projectId,`/${pathArray.join('/')}`)
+    await taskRepository.addFileIndexTask(projectId, `/${pathArray.join('/')}`)
     return c.text('', 204)
   } catch (err) {
     logger.error({ err, filePath }, 'failed to create or update file in project')

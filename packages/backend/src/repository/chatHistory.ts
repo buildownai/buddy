@@ -1,9 +1,9 @@
-import type { Message } from "ollama";
-import { RecordId, Table } from "surrealdb";
-import { getDb } from "../db.js";
-import logger from "../logger.js";
-import type { ChatConversation } from "../types/index.js";
-import { projectRepository } from "./project.js";
+import type { Message } from 'ollama'
+import { RecordId, Table } from 'surrealdb'
+import { getDb } from '../db.js'
+import logger from '../logger.js'
+import type { ChatConversation } from '../types/index.js'
+import { projectRepository } from './project.js'
 
 const defaultSystemMessageContent = `You are a helpful AI assistant named Pilot who can use tools.
 You help the user to work on his typescript project.
@@ -57,53 +57,51 @@ If you show code snippets in markdown, try to add the absolute file path like th
 If the project is a typescript project with workspaces, the file path must include the workspace as well.
 
 Follow the instructions and always use the tools to get context, and return the the answer in the defined format.
-`;
+`
 
-const chatConversationTable = new Table("chat_conversation");
+const chatConversationTable = new Table('chat_conversation')
 
-const chatMessageTable = new Table("chat_message");
+const chatMessageTable = new Table('chat_message')
 
 type ConversationDb = {
-  id: RecordId<"chat_conversation">;
-  project: RecordId<"project">;
-  createdAt: Date;
-};
+  id: RecordId<'chat_conversation'>
+  project: RecordId<'project'>
+  createdAt: Date
+}
 
 type ChatMessageDb = {
-  id: RecordId<"chat_message">;
-  chatConversation: RecordId<"chat_conversation">;
-  createdAt: Date;
-  role: string;
-  content: string;
-};
+  id: RecordId<'chat_message'>
+  chatConversation: RecordId<'chat_conversation'>
+  createdAt: Date
+  role: string
+  content: string
+}
 
 export const chatHistoryRepository = {
   startChatConversation: async (projectId: string, systemPrompt?: string) => {
-    const db = await getDb();
-    const res = (await db.create("chat_conversation", {
-      project: new RecordId("project", projectId),
-    })) as [ConversationDb];
+    const db = await getDb()
+    const res = (await db.create('chat_conversation', {
+      project: new RecordId('project', projectId),
+    })) as [ConversationDb]
 
-    const project = await projectRepository.getProjectById(projectId);
+    const project = await projectRepository.getProjectById(projectId)
 
-    logger.debug({ res }, "chat conversation created");
+    logger.debug({ res }, 'chat conversation created')
 
-    const systemMessage: Omit<ChatMessageDb, "id" | "createdAt"> = {
-      role: "system",
+    const systemMessage: Omit<ChatMessageDb, 'id' | 'createdAt'> = {
+      role: 'system',
       content:
         systemPrompt ??
-        `${defaultSystemMessageContent}\n## Project information\n${
-          project?.description ?? ""
-        }`,
+        `${defaultSystemMessageContent}\n## Project information\n${project?.description ?? ''}`,
       chatConversation: res[0].id,
-    };
+    }
 
-    await db.create("chat_message", systemMessage);
+    await db.create('chat_message', systemMessage)
 
-    return res[0].id.id as string;
+    return res[0].id.id as string
   },
   getConversations: async (projectId: string) => {
-    const db = await getDb();
+    const db = await getDb()
     const result = await db.query<[ChatConversation[]]>(
       `SELECT
     record::id(id) as id,
@@ -116,12 +114,12 @@ export const chatHistoryRepository = {
 FROM chat_conversation
 WHERE project=$projectId
 ORDER BY createdAt DESC;`,
-      { projectId: new RecordId("project", projectId) }
-    );
-    return result[0];
+      { projectId: new RecordId('project', projectId) }
+    )
+    return result[0]
   },
   getFullConversationById: async (conversationId: string) => {
-    const db = await getDb();
+    const db = await getDb()
 
     const result = await db.query<[ChatConversation | undefined]>(
       `SELECT
@@ -133,12 +131,12 @@ ORDER BY createdAt DESC;`,
         ORDER BY createdAt ASC
     ) as messages
 FROM ONLY $conversation`,
-      { conversation: new RecordId("chat_conversation", conversationId) }
-    );
-    return result[0];
+      { conversation: new RecordId('chat_conversation', conversationId) }
+    )
+    return result[0]
   },
   getConversationById: async (conversationId: string) => {
-    const db = await getDb();
+    const db = await getDb()
 
     const result = await db.query<[ChatConversation | undefined]>(
       `SELECT
@@ -150,12 +148,12 @@ FROM ONLY $conversation`,
         ORDER BY createdAt ASC
     ) as messages
 FROM ONLY $conversation`,
-      { conversation: new RecordId("chat_conversation", conversationId) }
-    );
-    return result[0];
+      { conversation: new RecordId('chat_conversation', conversationId) }
+    )
+    return result[0]
   },
   getRecentConversation: async (projectId: string) => {
-    const db = await getDb();
+    const db = await getDb()
 
     const result = await db.query<[ChatConversation | undefined]>(
       `SELECT
@@ -166,27 +164,22 @@ FROM ONLY $conversation`,
         FROM ONLY chat_message
         WHERE chatConversation.project=$projectId
         ORDER BY createdAt DESC LIMIT 1 FETCH chatConversation`,
-      { projectId: new RecordId("project", projectId) }
-    );
-    return result[0];
+      { projectId: new RecordId('project', projectId) }
+    )
+    return result[0]
   },
-  addMessageToConversation: async (
-    conversationId: string,
-    message: Message | Message[]
-  ) => {
-    const db = await getDb();
-    const transfromToDbSchema = (
-      m: Message
-    ): Omit<ChatMessageDb, "id" | "createdAt"> => {
+  addMessageToConversation: async (conversationId: string, message: Message | Message[]) => {
+    const db = await getDb()
+    const transfromToDbSchema = (m: Message): Omit<ChatMessageDb, 'id' | 'createdAt'> => {
       return {
         ...m,
-        chatConversation: new RecordId("chat_conversation", conversationId),
-      };
-    };
+        chatConversation: new RecordId('chat_conversation', conversationId),
+      }
+    }
     const input = Array.isArray(message)
       ? message.map(transfromToDbSchema)
-      : transfromToDbSchema(message);
+      : transfromToDbSchema(message)
 
-    await db.insert(chatMessageTable, input);
+    await db.insert(chatMessageTable, input)
   },
-};
+}

@@ -1,47 +1,45 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 
-const app = new OpenAPIHono();
+const app = new OpenAPIHono()
 
 const healthCheckResponseSchema = z.object({
-  ok: z.boolean().describe("Indicates if the API is operational"),
-  message: z
-    .string()
-    .describe("A message describing the current status of the API"),
-});
+  ok: z.boolean().describe('Indicates if the API is operational'),
+  message: z.string().describe('A message describing the current status of the API'),
+})
 
 const healthCheckRoute = createRoute({
-  method: "get",
-  path: "/",
+  method: 'get',
+  path: '/',
   description:
-    "Check the health status of the API. This endpoint can be used for monitoring and ensuring the API is operational.",
-  tags: ["Internal"],
+    'Check the health status of the API. This endpoint can be used for monitoring and ensuring the API is operational.',
+  tags: ['Internal'],
   responses: {
     200: {
-      description: "API health status",
+      description: 'API health status',
       content: {
-        "application/json": {
+        'application/json': {
           schema: healthCheckResponseSchema,
           example: {
             ok: true,
-            message: "BuildOwn.AI Pilot API is running!",
+            message: 'BuildOwn.AI Pilot API is running!',
           },
         },
       },
     },
     500: {
-      description: "Internal server error",
+      description: 'Internal server error',
       content: {
-        "application/json": {
+        'application/json': {
           schema: healthCheckResponseSchema,
           example: {
             ok: false,
-            message: "An unexpected error occurred while checking API health",
+            message: 'An unexpected error occurred while checking API health',
           },
         },
       },
     },
   },
-});
+})
 
 app.openapi(healthCheckRoute, (c) => {
   try {
@@ -51,19 +49,19 @@ app.openapi(healthCheckRoute, (c) => {
     return c.json(
       {
         ok: true,
-        message: "BuildOwn.AI Pilot API is running!",
+        message: 'BuildOwn.AI Pilot API is running!',
       },
       200
-    );
+    )
   } catch (error) {
     return c.json(
       {
         ok: false,
-        message: "An unexpected error occurred while checking API health",
+        message: 'An unexpected error occurred while checking API health',
       },
       500
-    );
+    )
   }
-});
+})
 
-export { app as healthCheck };
+export { app as healthCheck }

@@ -1,8 +1,8 @@
-import { config } from "../config.js";
-import { getNewLLM } from "./getNewLLM.js";
+import { config } from '../config.js'
+import { getNewLLM } from './getNewLLM.js'
 
 export const generateAnswer = async (content: string) => {
-  const llm = getNewLLM();
+  const llm = getNewLLM()
 
   const response = await llm.generate({
     model: config.llm.models.chat,
@@ -17,7 +17,7 @@ export const generateAnswer = async (content: string) => {
       top_p: 0.95,
       repeat_penalty: 1.1,
     },
-  });
+  })
 
-  return response.response;
-};
+  return response.response
+}
