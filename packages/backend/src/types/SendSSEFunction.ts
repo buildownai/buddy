@@ -1,3 +1,3 @@
-import type { SSEChatMessage } from "./SSEChatMessage.js";
+import type { SSEChatMessage } from './SSEChatMessage.js'
 
-export type SendSSEFunction = (event: SSEChatMessage) => Promise<void>;
+export type SendSSEFunction = (event: SSEChatMessage) => Promise<void>

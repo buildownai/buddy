@@ -1,17 +1,14 @@
-import { config } from "../config.js";
-import { llmDefaultOptions } from "../defaults/llmDefaultOptions.js";
-import { getNewLLM } from "./getNewLLM.js";
+import { config } from '../config.js'
+import { llmDefaultOptions } from '../defaults/llmDefaultOptions.js'
+import { getNewLLM } from './getNewLLM.js'
 
-export const generateSrcFileDescription = async (
-  content: string,
-  file: string
-) => {
-  const llm = getNewLLM();
+export const generateSrcFileDescription = async (content: string, file: string) => {
+  const llm = getNewLLM()
   const response = await llm.chat.completions.create({
     model: config.llm.models.small,
     messages: [
       {
-        role: "system",
+        role: 'system',
         content: `You are an AI which generates a short summarization for the file \`${file}\`
         It will be used by an AI RAG.
         Also include a detailed list of defined dependencies.
@@ -36,11 +33,11 @@ The description for functions and methods should also include a description of i
 `,
 */
       },
-      { role: "user", content },
+      { role: 'user', content },
     ],
     stream: false,
     ...llmDefaultOptions,
-  });
+  })
 
-  return response.choices[0]?.message?.content ?? "";
-};
+  return response.choices[0]?.message?.content ?? ''
+}

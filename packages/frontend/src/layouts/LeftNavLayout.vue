@@ -50,26 +50,26 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-import { AuthApi } from "../client/index.js";
+import { useRouter } from 'vue-router'
+import { AuthApi } from '../client/index.js'
 
-import { useTheme } from "../store/index.js";
+import { useTheme } from '../store/index.js'
 
 const props = defineProps<{
-  projectId: string;
-}>();
+  projectId: string
+}>()
 
-const router = useRouter();
-const { toggleDarkmode, isDarkmode } = useTheme();
+const router = useRouter()
+const { toggleDarkmode, isDarkmode } = useTheme()
 
 const logout = async () => {
   try {
-    await AuthApi.logout();
-    router.push("/");
+    await AuthApi.logout()
+    router.push('/')
   } catch (error) {
-    console.error("Logout failed:", error);
+    console.error('Logout failed:', error)
   }
-};
+}
 </script>
 
 <style scoped>

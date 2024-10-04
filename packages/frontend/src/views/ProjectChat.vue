@@ -141,110 +141,110 @@ import {
   ContextMenuRoot,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "radix-vue";
-import { Pane, Splitpanes } from "splitpanes";
-import { onBeforeUnmount, onMounted, ref, getCurrentInstance } from "vue";
-import { useRouter } from "vue-router";
-import Vue3TreeView from "vue3-tree-vue";
-import { backbone } from "../backbone/index.js";
-import { ProjectApi } from "../client/index.js";
-import ChatPane from "../components/ChatPane.vue";
-import FilesContainer from "../components/FilesContainer.vue";
-import LoaderAnimation from "../components/LoaderAnimation.vue";
-import { filenameToIcon } from "../helper/filenameToIcon.js";
-import type { TreeViewItem } from "../types/file.js";
-import { useI18n } from "vue-i18n";
-import { errorToMessage } from "../helper/errorToMessage.js";
+} from 'radix-vue'
+import { Pane, Splitpanes } from 'splitpanes'
+import { getCurrentInstance, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import Vue3TreeView from 'vue3-tree-vue'
+import { backbone } from '../backbone/index.js'
+import { ProjectApi } from '../client/index.js'
+import ChatPane from '../components/ChatPane.vue'
+import FilesContainer from '../components/FilesContainer.vue'
+import LoaderAnimation from '../components/LoaderAnimation.vue'
+import { errorToMessage } from '../helper/errorToMessage.js'
+import { filenameToIcon } from '../helper/filenameToIcon.js'
+import type { TreeViewItem } from '../types/file.js'
 
 const props = defineProps<{
-  projectId: string;
-}>();
+  projectId: string
+}>()
 
-const { proxy } = getCurrentInstance()!;
-const { t } = useI18n();
-const router = useRouter();
+const { proxy } = getCurrentInstance()!
+const { t } = useI18n()
+const router = useRouter()
 
-const pageReady = ref(false);
+const pageReady = ref(false)
 
-const files = ref<TreeViewItem[]>([]);
+const files = ref<TreeViewItem[]>([])
 
 const loadTree = async () => {
-  pageReady.value = false;
+  pageReady.value = false
   try {
-    files.value = await ProjectApi.getProjectFileTree(props.projectId);
-    pageReady.value = true;
+    files.value = await ProjectApi.getProjectFileTree(props.projectId)
+    pageReady.value = true
   } catch (err) {
-    const errorMessage = t(errorToMessage(err));
+    const errorMessage = t(errorToMessage(err))
     const retry = await proxy?.$showPopover({
-      title: t("dialog.error.loadProject.title"),
-      message: t("dialog.error.loadProject.message", { errorMessage }),
-      yesText: t("dialog.error.loadProject.btn.retry"),
-      noText: t("dialog.error.loadProject.btn.back"),
-      yesIcon: "refresh",
-      noIcon: "grid_view",
-    });
+      title: t('dialog.error.loadProject.title'),
+      message: t('dialog.error.loadProject.message', { errorMessage }),
+      yesText: t('dialog.error.loadProject.btn.retry'),
+      noText: t('dialog.error.loadProject.btn.back'),
+      yesIcon: 'refresh',
+      noIcon: 'grid_view',
+    })
 
     if (retry) {
-      await loadTree();
+      await loadTree()
     } else {
-      router.push({ name: "ProjectOverview" });
+      router.push({ name: 'ProjectOverview' })
     }
   }
-};
+}
 
 onMounted(async () => {
-  await loadTree();
-  pageReady.value = true;
+  await loadTree()
+  pageReady.value = true
 
-  backbone.on("file_upserted", () => loadTree());
-  backbone.on("file_deleted", () => loadTree());
-  backbone.on("file_deleted", () => loadTree());
-});
+  backbone.on('file_upserted', () => loadTree())
+  backbone.on('file_deleted', () => loadTree())
+  backbone.on('file_deleted', () => loadTree())
+})
 
 onBeforeUnmount(async () => {
-  backbone.off("file_upserted");
-  backbone.off("file_deleted");
-  backbone.off("file_deleted");
-});
+  backbone.off('file_upserted')
+  backbone.off('file_deleted')
+  backbone.off('file_deleted')
+})
 
 const handleSelectFile = async (item: TreeViewItem) => {
   if (item.meta.isDirectory) {
-    item.expanded = !item.expanded;
-    return;
+    item.expanded = !item.expanded
+    return
   }
-  window.backbone.emit("open_file", { path: item.meta.path });
-};
+  window.backbone.emit('open_file', { path: item.meta.path })
+}
 
 const handleNewFolder = async (...args: unknown[]) => {
-  console.log(args);
-};
+  console.log(args)
+}
 
 const handleNewFile = async (...args: unknown[]) => {
-  console.log(args);
-};
+  console.log(args)
+}
 
 const handleCopyPath = async (...args: unknown[]) => {
-  console.log(args);
-};
+  console.log(args)
+}
 
 const handleDuplicate = async (...args: unknown[]) => {
-  console.log(args);
-};
+  console.log(args)
+}
 
 const handleRename = async (...args: unknown[]) => {
-  console.log(args);
-};
+  console.log(args)
+}
 
 const handleMoveFile = async (oldPath: string, newPath: string) => {
-  console.log(`Moving file from ${oldPath} to ${newPath}`);
-};
+  console.log(`Moving file from ${oldPath} to ${newPath}`)
+}
 
 const handleDelete = async (path: string) => {
   // Implement your file deletion logic here
-  console.log(`Deleting file: ${path}`);
+  console.log(`Deleting file: ${path}`)
   // You might want to call an API to perform the actual file deletion
   // After successful deletion, you may want to refresh the file tree
-};
+}
 </script>
 
 <style scoped>

@@ -28,44 +28,44 @@
 </template>
 
 <script setup lang="ts">
-import VueMarkdown from "./VueMarkdown.vue";
-import { useI18n } from "vue-i18n";
+import { useI18n } from 'vue-i18n'
+import VueMarkdown from './VueMarkdown.vue'
 
-import { computed } from "vue";
-import type { ChatMessage, ChatMessageToolUsage } from "../types/chat.js";
+import { computed } from 'vue'
+import type { ChatMessage, ChatMessageToolUsage } from '../types/chat.js'
 
 const props = defineProps<{
-  message: ChatMessage;
-}>();
+  message: ChatMessage
+}>()
 
-const { t } = useI18n();
+const { t } = useI18n()
 
-const isUser = computed(() => props.message.role === "user");
-const tools = computed(() => props.message.tools ?? []);
+const isUser = computed(() => props.message.role === 'user')
+const tools = computed(() => props.message.tools ?? [])
 
 const toolToText = (tool: ChatMessageToolUsage) => {
   switch (tool.name) {
-    case "read_file":
-      return t("toolcall.readFile");
-    case "check_if_file_exist":
-      return t("toolcall.checkIfFileExists");
-    case "create_directory":
-      return t("toolcall.createDirectory");
-    case "fetch_webpage":
-      return t("toolcall.fetchWebpage");
-    case "get_folder_file_structure":
-      return t("toolcall.getFolderStructure");
-    case "get_npm_package_info":
-      return t("toolcall.npmPackageInfo", {
+    case 'read_file':
+      return t('toolcall.readFile')
+    case 'check_if_file_exist':
+      return t('toolcall.checkIfFileExists')
+    case 'create_directory':
+      return t('toolcall.createDirectory')
+    case 'fetch_webpage':
+      return t('toolcall.fetchWebpage')
+    case 'get_folder_file_structure':
+      return t('toolcall.getFolderStructure')
+    case 'get_npm_package_info':
+      return t('toolcall.npmPackageInfo', {
         name: tool.arguments.name,
-        version: tool.arguments.version ?? "latest",
-      });
-    case "get_context":
-      return t("toolcall.getContext");
-    case "write_file":
-      return t("toolcall.writeFile");
+        version: tool.arguments.version ?? 'latest',
+      })
+    case 'get_context':
+      return t('toolcall.getContext')
+    case 'write_file':
+      return t('toolcall.writeFile')
     default:
-      return t("toolcall.unknownTool");
+      return t('toolcall.unknownTool')
   }
-};
+}
 </script>

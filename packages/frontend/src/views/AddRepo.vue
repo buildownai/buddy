@@ -133,74 +133,74 @@
 </template>
 
 <script lang="ts" setup>
-import { defineComponent, ref } from "vue";
-import { useRouter } from "vue-router";
-import { RepoApi } from "../client/index.js";
-import type { SSEMessage } from "../types/sse.js";
+import { defineComponent, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { RepoApi } from '../client/index.js'
+import type { SSEMessage } from '../types/sse.js'
 
-const router = useRouter();
-const repositoryUrl = ref("");
-const name = ref("");
-const isAnalyzing = ref(false);
-const isComplete = ref(false);
-const stepProgress = ref(0);
-const progressMessage = ref("");
-const currentStep = ref("");
-const steps = ref<string[]>([]);
-const error = ref("");
-const projectId = ref("");
+const router = useRouter()
+const repositoryUrl = ref('')
+const name = ref('')
+const isAnalyzing = ref(false)
+const isComplete = ref(false)
+const stepProgress = ref(0)
+const progressMessage = ref('')
+const currentStep = ref('')
+const steps = ref<string[]>([])
+const error = ref('')
+const projectId = ref('')
 
 const handleSubmit = async () => {
-  if (!repositoryUrl.value) return;
+  if (!repositoryUrl.value) return
 
-  isAnalyzing.value = true;
-  stepProgress.value = 0;
-  progressMessage.value = "";
-  currentStep.value = "";
-  steps.value = [];
-  error.value = "";
+  isAnalyzing.value = true
+  stepProgress.value = 0
+  progressMessage.value = ''
+  currentStep.value = ''
+  steps.value = []
+  error.value = ''
 
   try {
-    const eventStream = RepoApi.analyzeRepo(repositoryUrl.value, name.value);
+    const eventStream = RepoApi.analyzeRepo(repositoryUrl.value, name.value)
 
     for await (const event of eventStream) {
-      const data = event as SSEMessage;
+      const data = event as SSEMessage
 
-      console.log(data);
+      console.log(data)
 
       switch (data.event) {
-        case "info":
-          steps.value = data.steps;
-          break;
-        case "progress":
-          stepProgress.value = data.progress;
-          progressMessage.value = data.message;
-          currentStep.value = data.step;
-          break;
-        case "complete":
-          progressMessage.value = data.message;
-          isAnalyzing.value = false;
-          isComplete.value = true;
-          projectId.value = data.projectId;
-          break;
-        case "error":
-          throw new Error(data.message);
+        case 'info':
+          steps.value = data.steps
+          break
+        case 'progress':
+          stepProgress.value = data.progress
+          progressMessage.value = data.message
+          currentStep.value = data.step
+          break
+        case 'complete':
+          progressMessage.value = data.message
+          isAnalyzing.value = false
+          isComplete.value = true
+          projectId.value = data.projectId
+          break
+        case 'error':
+          throw new Error(data.message)
       }
     }
   } catch (err) {
-    error.value = err instanceof Error ? err.message : "An error occurred";
-    isAnalyzing.value = false;
+    error.value = err instanceof Error ? err.message : 'An error occurred'
+    isAnalyzing.value = false
   }
-};
+}
 
 const goBack = () => {
-  router.push({ name: "ProjectOverview" });
-};
+  router.push({ name: 'ProjectOverview' })
+}
 
 const goToChat = () => {
   router.push({
-    name: "ProjectChat",
+    name: 'ProjectChat',
     params: { projectId: projectId.value },
-  });
-};
+  })
+}
 </script>

@@ -1,6 +1,6 @@
 import { type Message, Ollama } from 'ollama'
 import { z } from 'zod'
-import zodToJsonSchema from 'zod-to-json-schema'
+import type zodToJsonSchema from 'zod-to-json-schema'
 import { config } from '../../config.js'
 import logger from '../../logger.js'
 import type { ToolEntry } from '../../types/index.js'
@@ -139,12 +139,11 @@ Try to categorize the output in success or fail.
       return 'Error: Sorry, but unable to read file'
     }
   },
-  schema: {
+  schema: 
     type: 'function',
     function: {
       name: 'step_agent',
       description: 'A list of steps in natural language which are executed sequentially by an llm',
       parameters: zodToJsonSchema(paramSchema) as any,
-    },
-  },
+    },,
 }

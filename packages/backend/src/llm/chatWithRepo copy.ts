@@ -1,92 +1,85 @@
-import {
-  type ChatResponse,
-  type ErrorResponse,
-  type Message,
-  Ollama,
-} from "ollama";
-import { config } from "../config.js";
-import { llmDefaultOptions } from "../defaults/llmDefaultOptions.js";
-import logger from "../logger.js";
-import { chatHistoryRepository } from "../repository/chatHistory.js";
-import type { SendSSEFunction } from "../types/index.js";
-import { availableFunctions, tools } from "./tools/index.js";
+import { type ChatResponse, type ErrorResponse, type Message, Ollama } from 'ollama'
+import { config } from '../config.js'
+import { llmDefaultOptions } from '../defaults/llmDefaultOptions.js'
+import logger from '../logger.js'
+import { chatHistoryRepository } from '../repository/chatHistory.js'
+import type { SendSSEFunction } from '../types/index.js'
+import { availableFunctions, tools } from './tools/index.js'
 
 class AbortableAsyncIterator<T extends object> {
-  private readonly abortController: AbortController;
-  private readonly itr: AsyncGenerator<T | ErrorResponse>;
-  private readonly doneCallback: () => void;
+  private readonly abortController: AbortController
+  private readonly itr: AsyncGenerator<T | ErrorResponse>
+  private readonly doneCallback: () => void
 
   constructor(
     abortController: AbortController,
     itr: AsyncGenerator<T | ErrorResponse>,
     doneCallback: () => void
   ) {
-    this.abortController = abortController;
-    this.itr = itr;
-    this.doneCallback = doneCallback;
+    this.abortController = abortController
+    this.itr = itr
+    this.doneCallback = doneCallback
   }
 
   abort() {
-    this.abortController.abort();
+    this.abortController.abort()
   }
 
   async *[Symbol.asyncIterator]() {
     for await (const message of this.itr) {
-      if ("error" in message) {
-        throw new Error(message.error);
+      if ('error' in message) {
+        throw new Error(message.error)
       }
-      yield message;
+      yield message
       // message will be done in the case of chat and generate
       // message will be success in the case of a progress response (pull, push, create)
-      if ((message as any).done || (message as any).status === "success") {
-        this.doneCallback();
-        return;
+      if ((message as any).done || (message as any).status === 'success') {
+        this.doneCallback()
+        return
       }
     }
-    throw new Error("Did not receive done or success response in stream.");
+    throw new Error('Did not receive done or success response in stream.')
   }
 }
 
 export const chatWithRepo = async (input: {
-  projectId: string;
-  conversationId: string;
-  sendSSE: SendSSEFunction;
-  content?: string;
-  llm?: Ollama;
-  abort?: AbortController;
-  messages?: Message[];
+  projectId: string
+  conversationId: string
+  sendSSE: SendSSEFunction
+  content?: string
+  llm?: Ollama
+  abort?: AbortController
+  messages?: Message[]
 }): Promise<AbortableAsyncIterator<ChatResponse>> => {
-  const ollama = input.llm ?? new Ollama({ host: config.llm.url });
+  const ollama = input.llm ?? new Ollama({ host: config.llm.url })
   if (input.content) {
-    logger.debug("persisting message");
+    logger.debug('persisting message')
     // persist the user message in db
     await chatHistoryRepository.addMessageToConversation(input.conversationId, {
-      role: "user",
+      role: 'user',
       content: input.content,
-    });
+    })
   }
 
-  let messages: Message[];
+  let messages: Message[]
   if (!input.messages) {
-    logger.debug("fetching messages");
-    const conversation = await chatHistoryRepository.getFullConversationById(
-      input.conversationId
-    );
+    logger.debug('fetching messages')
+    const conversation = await chatHistoryRepository.getFullConversationById(input.conversationId)
     if (!conversation) {
-      throw new Error("Invalid conversation");
+      throw new Error('Invalid conversation')
     }
-    messages = conversation.messages;
+    messages = conversation.messages
   } else {
-    messages = input.messages;
+    messages = input.messages
   }
 
-  logger.debug("Calling ollama");
+  logger.debug('Calling ollama')
 
   if (input.abort) {
-    input.abort.signal.addEventListener("abort", () => {
-      ollama.abort();
-      logger.debug("Ollama request aborted");
-    });
+    input.abort.signal.addEventListener('abort', () => {
+      ollama.abort()
+      logger.debug('Ollama request aborted')
+    })
   }
 
   const response = await ollama.chat({
@@ -97,55 +90,53 @@ export const chatWithRepo = async (input: {
     options: {
       ...llmDefaultOptions,
     },
-  });
+  })
 
-  messages.push(response.message);
+  messages.push(response.message)
 
   async function* generateResponse(input: ChatResponse) {
-    yield input;
+    yield input
   }
 
   if (!response.message.tool_calls?.length) {
-    logger.debug("Returning response directly - no tool calls");
+    logger.debug('Returning response directly - no tool calls')
     return new AbortableAsyncIterator(
       input.abort ?? new AbortController(),
       generateResponse(response),
       () => {}
-    );
+    )
   }
 
   for (const tool of response.message.tool_calls) {
-    logger.debug(`Calling function ${tool.function.name}`);
-    const toolEntry = availableFunctions.get(tool.function.name);
+    logger.debug(`Calling function ${tool.function.name}`)
+    const toolEntry = availableFunctions.get(tool.function.name)
     if (!toolEntry) {
       messages.push({
-        role: "tool",
+        role: 'tool',
         content: `Error: There is no tool ${tool.function.name} available`,
-      });
-      continue;
+      })
+      continue
     }
     const functionResponse = await toolEntry.fn(
       { ...tool.function.arguments, projectId: input.projectId },
       input.sendSSE
-    );
+    )
 
     const content =
-      typeof functionResponse === "string"
-        ? functionResponse
-        : JSON.stringify(functionResponse);
+      typeof functionResponse === 'string' ? functionResponse : JSON.stringify(functionResponse)
     await input.sendSSE(
-      "info",
+      'info',
       `Calling tool ${tool.function.name} with arguments ${JSON.stringify(
         tool.function.arguments
       )}: ${content}`
-    );
+    )
 
-    logger.debug({ toolName: tool.function.name }, "Tool Response");
+    logger.debug({ toolName: tool.function.name }, 'Tool Response')
 
     messages.push({
-      role: "tool",
+      role: 'tool',
       content,
-    });
+    })
   }
 
   return await chatWithRepo({
@@ -154,5 +145,5 @@ export const chatWithRepo = async (input: {
     sendSSE: input.sendSSE,
     llm: ollama,
     messages,
-  });
-};
+  })
+}

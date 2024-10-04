@@ -64,216 +64,213 @@
   </div>
 </template>
 <script setup lang="ts">
-import { fetchEventSource } from "@microsoft/fetch-event-source";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { backbone } from "../backbone/index.js";
-import { BaseApi } from "../client/base.js";
-import { ChatApi, ConversationHistory } from "../client/index.js";
-import { useAuth } from "../store/index.js";
-import { ChatMessage, SSEChatMessage, SSEChatToolCall } from "../types/chat.js";
-import ChatInput from "./ChatInput.vue";
-import MessageList from "./MessageList.vue";
-import RobotThinking from "./RobotThinking.vue";
+import { fetchEventSource } from '@microsoft/fetch-event-source'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { backbone } from '../backbone/index.js'
+import { BaseApi } from '../client/base.js'
+import { ChatApi, ConversationHistory } from '../client/index.js'
+import { useAuth } from '../store/index.js'
+import { ChatMessage, SSEChatMessage, SSEChatToolCall } from '../types/chat.js'
+import ChatInput from './ChatInput.vue'
+import MessageList from './MessageList.vue'
+import RobotThinking from './RobotThinking.vue'
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
 const props = defineProps<{
-  projectId: string;
-}>();
+  projectId: string
+}>()
 
-const { getTokens } = useAuth();
+const { getTokens } = useAuth()
 
-const chatContainer = ref<HTMLElement | null>(null);
-const isLoading = ref(false);
-const chatInput = ref<InstanceType<typeof ChatInput.default> | null>(null);
-const messages = ref<ChatMessage[]>([]);
-const conversationId = ref<string | undefined>();
-const tab = ref<"chat" | "history">("chat");
-const conversations = ref<ConversationHistory[]>([]);
-const chatMessageContext = ref("");
+const chatContainer = ref<HTMLElement | null>(null)
+const isLoading = ref(false)
+const chatInput = ref<InstanceType<typeof ChatInput.default> | null>(null)
+const messages = ref<ChatMessage[]>([])
+const conversationId = ref<string | undefined>()
+const tab = ref<'chat' | 'history'>('chat')
+const conversations = ref<ConversationHistory[]>([])
+const chatMessageContext = ref('')
 
-let ctrl: AbortController | null = null;
+let ctrl: AbortController | null = null
 
-const toDateString = (date: string) => dayjs(date).fromNow();
+const toDateString = (date: string) => dayjs(date).fromNow()
 
 const scrollToBottom = () => {
   if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   }
-};
+}
 
 const showHistory = async () => {
-  tab.value = tab.value === "chat" ? "history" : "chat";
-  conversations.value = await ChatApi.getConversations(props.projectId);
-};
+  tab.value = tab.value === 'chat' ? 'history' : 'chat'
+  conversations.value = await ChatApi.getConversations(props.projectId)
+}
 
 const showChat = async () => {
-  tab.value = "chat";
-};
+  tab.value = 'chat'
+}
 
 const showNewChat = async () => {
-  messages.value = [];
-  conversationId.value = undefined;
-  await showChat();
-};
+  messages.value = []
+  conversationId.value = undefined
+  await showChat()
+}
 
 const loadConversation = async (id: string) => {
-  const conversation = await ChatApi.getConversation(props.projectId, id);
-  messages.value = conversation.messages;
-  conversationId.value = conversation.id;
-  await showChat();
-  scrollToBottom();
-};
+  const conversation = await ChatApi.getConversation(props.projectId, id)
+  messages.value = conversation.messages
+  conversationId.value = conversation.id
+  await showChat()
+  scrollToBottom()
+}
 
 onMounted(async () => {
-  chatInput.value?.focus();
-  backbone.on("ask_chat", (event) => {
-    chatMessageContext.value =
-      "The following question relates to your generated code";
+  chatInput.value?.focus()
+  backbone.on('ask_chat', (event) => {
+    chatMessageContext.value = 'The following question relates to your generated code'
     if (event.filename?.length) {
-      chatMessageContext.value += ` of file ${event.filename}.`;
+      chatMessageContext.value += ` of file ${event.filename}.`
     }
-    chatMessageContext.value += `\n You generated this code\n\n\`\`\`\n${event.code}\n\`\`\``;
-  });
+    chatMessageContext.value += `\n You generated this code\n\n\`\`\`\n${event.code}\n\`\`\``
+  })
 
-  const recentConversation = await ChatApi.getRecentConversation(
-    props.projectId
-  ).catch((err) => {
+  const recentConversation = await ChatApi.getRecentConversation(props.projectId).catch((err) => {
     return {
       messages: [],
       id: undefined,
-      summary: "",
+      summary: '',
       createdAt: new Date().toISOString(),
-    };
-  });
-  messages.value = recentConversation.messages;
-  conversationId.value = recentConversation.id;
+    }
+  })
+  messages.value = recentConversation.messages
+  conversationId.value = recentConversation.id
 
-  scrollToBottom();
-});
+  scrollToBottom()
+})
 
 onBeforeUnmount(() => {
-  backbone.off("ask_chat");
-});
+  backbone.off('ask_chat')
+})
 
 watch(
   () => messages.value,
   () => {
-    nextTick(scrollToBottom);
+    nextTick(scrollToBottom)
   },
   { deep: true }
-);
+)
 
 const abort = () => {
   if (ctrl) {
-    ctrl.abort();
-    messages.value.pop();
-    messages.value.pop();
+    ctrl.abort()
+    messages.value.pop()
+    messages.value.pop()
   }
-  isLoading.value = false;
-};
+  isLoading.value = false
+}
 
 const sendMessage = async (input: string) => {
   const content = chatMessageContext.value.length
     ? `${chatMessageContext.value}\n\n${input}`
-    : input;
+    : input
   messages.value.push(
     {
       content,
-      role: "user",
+      role: 'user',
     },
     {
-      content: "",
-      role: "assistant",
+      content: '',
+      role: 'assistant',
     }
-  );
+  )
 
-  const msgIndex = messages.value.length - 1;
+  const msgIndex = messages.value.length - 1
 
-  ctrl = new AbortController();
+  ctrl = new AbortController()
 
   const callBackend = async () =>
     await fetchEventSource(`/api/v1/projects/${props.projectId}/chat`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({
         message: content,
         conversationId: conversationId.value,
       }),
       signal: ctrl?.signal,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${getTokens()?.accessToken}`,
       },
       openWhenHidden: true,
       onopen: async (response: Response) => {
-        isLoading.value = true;
+        isLoading.value = true
         if (response.ok) {
-          return;
+          return
         }
         if (response.status !== 401) {
-          throw new Error("");
+          throw new Error('')
         }
-        const tok = await BaseApi.refreshTokens();
+        const tok = await BaseApi.refreshTokens()
         if (!tok) {
-          throw new Error("");
+          throw new Error('')
         }
-        await callBackend();
+        await callBackend()
       },
       onerror: (e: Error) => {
-        console.log("onerror", e);
-        isLoading.value = false;
-        ctrl = null;
-        chatMessageContext.value = "";
-        throw e;
+        console.log('onerror', e)
+        isLoading.value = false
+        ctrl = null
+        chatMessageContext.value = ''
+        throw e
       },
       onclose: () => {
-        isLoading.value = false;
-        ctrl = null;
-        chatMessageContext.value = "";
+        isLoading.value = false
+        ctrl = null
+        chatMessageContext.value = ''
       },
       onmessage: async (msg: { data: string }) => {
-        const data = JSON.parse(msg.data) as SSEChatMessage;
+        const data = JSON.parse(msg.data) as SSEChatMessage
 
         const addToolUsage = (e: SSEChatToolCall) => {
           if (!messages.value[msgIndex].tools) {
-            messages.value[msgIndex].tools = [];
+            messages.value[msgIndex].tools = []
           }
-          messages.value[msgIndex].tools.push(e);
-        };
+          messages.value[msgIndex].tools.push(e)
+        }
 
         switch (data.event) {
-          case "token":
-            messages.value[msgIndex].content += data.content;
-            break;
-          case "start":
-            isLoading.value = true;
-            break;
-          case "error":
-            isLoading.value = false;
-            console.error("error", data);
-            break;
-          case "info":
-            console.log("info", data);
-            break;
-          case "end":
-            isLoading.value = false;
-            break;
-          case "tool_call":
-            addToolUsage(data);
-            break;
+          case 'token':
+            messages.value[msgIndex].content += data.content
+            break
+          case 'start':
+            isLoading.value = true
+            break
+          case 'error':
+            isLoading.value = false
+            console.error('error', data)
+            break
+          case 'info':
+            console.log('info', data)
+            break
+          case 'end':
+            isLoading.value = false
+            break
+          case 'tool_call':
+            addToolUsage(data)
+            break
           default:
-            console.log("unknown event", data);
-            break;
+            console.log('unknown event', data)
+            break
         }
       },
-    });
+    })
 
-  await callBackend();
-  chatMessageContext.value = "";
-  chatInput.value?.focus();
-};
+  await callBackend()
+  chatMessageContext.value = ''
+  chatInput.value?.focus()
+}
 </script>
 
 <style lang="css">

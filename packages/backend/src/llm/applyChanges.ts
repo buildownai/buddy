@@ -1,19 +1,19 @@
-import { config } from "../config.js";
-import { llmDefaultOptions } from "../defaults/llmDefaultOptions.js";
-import { getNewLLM } from "./getNewLLM.js";
+import { config } from '../config.js'
+import { llmDefaultOptions } from '../defaults/llmDefaultOptions.js'
+import { getNewLLM } from './getNewLLM.js'
 
 export const applyChanges = async (
   _projectId: string,
   originalContent: string,
   contentToApply: string
 ) => {
-  const llm = getNewLLM();
+  const llm = getNewLLM()
 
   const response = await llm.chat.completions.create({
     model: config.llm.models.chat,
     messages: [
       {
-        role: "system",
+        role: 'system',
         content: `You are an AI applies code changes on existing code.
 
 # Instructions:
@@ -30,7 +30,7 @@ export const applyChanges = async (
     `,
       },
       {
-        role: "user",
+        role: 'user',
         content: `Here is the original code
 
 ${originalContent}
@@ -44,7 +44,7 @@ ${contentToApply}
     ],
     stream: true,
     ...llmDefaultOptions,
-  });
+  })
 
-  return response;
-};
+  return response
+}
