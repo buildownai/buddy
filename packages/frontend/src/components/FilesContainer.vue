@@ -39,11 +39,13 @@
         </div>
       </div>
     </div>
-    <CodeEditor
-      v-if="activeTab"
-      :file-name="activeTab.path"
-      :project-id="projectId"
-    />
+    <template v-if="activeTab">
+      <CodeEditor
+        :file-name="activeTab.path"
+        :project-id="projectId"
+        ref="editor"
+      />
+    </template>
   </div>
 </template>
 
@@ -53,30 +55,45 @@ type TabEntry = {
   path: string
 }
 
-import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
+import { nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue'
+import { getCurrentInstance } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { backbone } from '../backbone/index.js'
+import { BaseApi } from '../client/base.js'
 import { ProjectApi } from '../client/project.js'
 import { filenameToIcon } from '../helper/filenameToIcon.js'
 import { createBrowserEnv } from '../store/browserEnv.js'
-import { createState, hasState, removeState } from '../store/editorStates.js'
+import { clearStates, createState, getState, hasState, removeState } from '../store/editorStates.js'
+import { useAuth } from '../store/index.js'
+import { SSEChatMessage } from '../types/chat.js'
 import CodeEditor from './CodeEditor.vue'
+
+const { t } = useI18n()
+const { proxy } = getCurrentInstance()!
 
 const props = defineProps<{
   projectId: string
 }>()
 
+const { getTokens } = useAuth()
+
 // Define tabs
 const tabs = ref<TabEntry[]>([])
+const editor = ref<typeof CodeEditor | null>(null)
 
 onBeforeMount(async () => {
   await createBrowserEnv(props.projectId)
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(async () => {
   backbone.off('apply_code_to_file')
   backbone.off('open_file')
   backbone.off('save_file')
+  await clearStates()
 })
+
+let ctrl: AbortController | null
 
 onMounted(() => {
   backbone.on('open_file', async (event) => {
@@ -94,30 +111,118 @@ onMounted(() => {
         // add merge function
       })
       .catch((err) => {
-        createState(props.projectId, path, event.code)
+        createState(props.projectId, path, 'FAILED TO LOAD')
         setActiveTab(path, name)
       })
   })
+
+  const applyCodeChanges = async (codeToApply: string) => {
+    await nextTick()
+    await nextTick()
+    const state = await getState(props.projectId, activeTab.value?.path!)
+    const originalCode = state?.doc.toString()
+
+    ctrl = new AbortController()
+
+    const callBackend = async () =>
+      await fetchEventSource(`/api/v1/projects/${props.projectId}/apply-code`, {
+        method: 'POST',
+        body: JSON.stringify({
+          original: originalCode,
+          codeToApply,
+        }),
+        signal: ctrl?.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getTokens()?.accessToken}`,
+        },
+        openWhenHidden: true,
+        onopen: async (response: Response) => {
+          if (response.ok) {
+            await editor.value?.switchToMergeView()
+            return
+          }
+          if (response.status !== 401) {
+            throw new Error('')
+          }
+          const tok = await BaseApi.refreshTokens()
+          if (!tok) {
+            throw new Error('')
+          }
+          await callBackend()
+        },
+        onerror: (e: Error) => {
+          console.log('onerror', e)
+          ctrl = null
+          throw e
+        },
+        onclose: () => {
+          ctrl = null
+        },
+        onmessage: async (msg: { data: string }) => {
+          const data = JSON.parse(msg.data) as SSEChatMessage
+
+          switch (data.event) {
+            case 'token':
+              editor.value?.appendCode(data.content)
+              break
+            case 'start':
+              break
+            case 'error':
+              console.error('error', data.content)
+              break
+            case 'end':
+              break
+            default:
+              console.log('unknown event', data)
+              break
+          }
+        },
+      })
+
+    await callBackend()
+  }
 
   backbone.on('apply_code_to_file', async (event) => {
     const path = event.filename
     const s = path.split('/')
     const name = s[s.length - 1]
     if (hasState(props.projectId, path)) {
-      setActiveTab(path, name)
-      // add merge function
+      await setActiveTab(path, name)
+      await applyCodeChanges(event.code)
       return
     }
-    ProjectApi.getFile(props.projectId, path)
-      .then((content) => {
-        createState(props.projectId, path, content)
-        setActiveTab(path, name)
-        // add merge function
+    const content = await ProjectApi.getFile(props.projectId, path).catch(async (err) => {
+      const confirmed = await proxy?.$showPopover({
+        title: t('dialog.createFile.title'),
+        message: t('dialog.createFile.message', { path }),
+        yesText: t('dialog.createFile.btn.yes'),
+        noText: t('dialog.createFile.btn.no'),
       })
-      .catch((err) => {
-        createState(props.projectId, path, event.code)
-        setActiveTab(path, name)
+
+      if (!confirmed) {
+        return undefined
+      }
+      const error = await ProjectApi.putFile(props.projectId, path, event.code).catch((err) => {
+        console.error('failed to create')
+        return new Error('Failed to create file')
       })
+
+      if (error) {
+        return undefined
+      }
+
+      createState(props.projectId, path, event.code)
+      setActiveTab(path, name)
+
+      return undefined
+    })
+    if (!content) {
+      return
+    }
+    createState(props.projectId, path, content)
+    await setActiveTab(path, name)
+    await applyCodeChanges(event.code)
   })
 
   backbone.on('save_file', async (event) => {
@@ -131,7 +236,9 @@ onMounted(() => {
 // State for the active tab
 const activeTab = ref<TabEntry | undefined>()
 
-const closeActiveTab = (path: string) => {
+const closeActiveTab = async (path: string) => {
+  ctrl?.abort('Tab closed')
+  await editor.value?.abortMergeView()
   let currentIndex = 0
   tabs.value = tabs.value.filter((tab, index) => {
     const isMatching = tab.path !== path
@@ -155,6 +262,8 @@ const closeActiveTab = (path: string) => {
 
 // Method to set the active tab
 const setActiveTab = async (path: string, name: string) => {
+  ctrl?.abort('Tab closed')
+  await editor.value?.abortMergeView()
   let existing = tabs.value.find((tab) => tab.path === path)
   if (!existing) {
     existing = { name, path }

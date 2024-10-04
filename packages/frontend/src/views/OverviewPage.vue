@@ -1,6 +1,8 @@
 <template>
   <div class="space-y-6 m-8">
-    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Projects Overview</h1>
+    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+      {{ $t("projectOverview.title") }}
+    </h1>
     <ProjectGrid />
   </div>
 </template>

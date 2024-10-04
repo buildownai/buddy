@@ -1,6 +1,8 @@
 <template>
   <form class="mt-2" @submit.prevent="sendMessage">
-    <label for="chat-input" class="sr-only">Enter your prompt</label>
+    <label for="chat-input" class="sr-only">{{
+      $t("chatRepo.input.placeholder.enterPrompt")
+    }}</label>
     <div class="relative">
       <button
         type="button"
@@ -33,28 +35,30 @@
         v-model="inputMessage"
         @keydown.enter.exact.prevent="sendMessage"
         class="block w-full resize-none rounded-xl border-none bg-slate-200 p-4 pl-10 pr-20 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200 dark:placeholder-slate-400 dark:focus:ring-blue-500 sm:text-base"
-        placeholder="Enter your prompt"
+        :placeholder="$t('chatRepo.input.placeholder.enterPrompt')"
         :rows="rows"
         required
         :disabled="isLoading"
       ></textarea>
       <button
         type="submit"
+        :title="$t('chatRepo.btn.sendMessage')"
         v-if="!isLoading"
         :disabled="!inputMessage.trim()"
         class="absolute h-10 bottom-2 right-2.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <div class="material-icons-outlined">send</div>
-        <span class="sr-only">Send message</span>
+        <span class="sr-only">{{ $t("chatRepo.btn.sendMessage") }}</span>
       </button>
       <button
+        :title="$t('chatRepo.btn.abort')"
         @click="abort"
         type="button"
         v-else
         class="absolute h-10 bottom-2 right-2.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <div class="material-icons-outlined">stop_circle</div>
-        <span class="sr-only">Send message</span>
+        <span class="sr-only">{{ $t("chatRepo.btn.abort") }}</span>
       </button>
     </div>
   </form>
@@ -75,8 +79,6 @@ const emit = defineEmits<{
 
 const inputMessage = ref('')
 const inputElement = ref<HTMLTextAreaElement | null>(null)
-
-const context = ref<string[]>([])
 
 const rows = computed(() => {
   const l = inputMessage.value.split('\n').length

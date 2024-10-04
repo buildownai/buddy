@@ -1,15 +1,14 @@
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-800">
     <main class="flex-grow overflow-hidden">
-      <div class="h-full">
+      <div class="h-full w-full">
         <router-view></router-view>
       </div>
     </main>
   </div>
 </template>
 
-<script lang="ts" setup>
-</script>
+<script lang="ts" setup></script>
 
 <style>
 :root {
@@ -17,8 +16,7 @@
 }
 
 main {
-  height: 100vh; 
+  height: 100vh;
   box-sizing: border-box;
 }
 </style>
-

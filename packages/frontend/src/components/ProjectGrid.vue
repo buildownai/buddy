@@ -17,7 +17,7 @@
     <router-link
       v-for="project in projects"
       :key="project.id"
-      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-150 cursor-pointer"
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-150 cursor-pointer overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-700"
       :to="{ name: 'ProjectChat', params: { projectId: project.id } }"
     >
       <div class="text-3xl mb-2">{{ project.icon }}</div>
@@ -25,8 +25,8 @@
         {{ project.name }}
       </h3>
       <p class="text-gray-600 dark:text-gray-400">{{ project.name }}</p>
-      <p class="text-gray-600 dark:text-gray-400">
-        <small>{{ project.repositoryUrl }}</small>
+      <p class="text-gray-600 dark:text-gray-400 font-light text-sm">
+        {{ project.repositoryUrl }}
       </p>
     </router-link>
   </div>

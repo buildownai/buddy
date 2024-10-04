@@ -38,12 +38,31 @@
       </svg>
     </button>
 
-    <div class="max-w-md w-full space-y-8">
+    <div class="max-w-md w-full">
+      <div
+        class="text-8xl text-center text-gray-900 dark:text-white flex justify-center"
+      >
+        <div class="font-light text-gray-300 dark:text-gray-700 text-5xl pt-6">
+          &lt;{
+        </div>
+        <div class="font-semibold">PILOT</div>
+        <div class="font-light text-gray-300 dark:text-gray-700 text-5xl pt-6">
+          }&gt;
+        </div>
+      </div>
+      <div class="text-xl text-center text-gray-500 dark:text-gray-400">
+        <span class="font-light text-xs">POWERED BY<br /></span
+        ><a href="https://buildown.ai" target="_blank" title="Build Own AI"
+          ><span class="font-semibold text-blue-800">Build</span
+          ><span class="font-light">Own</span
+          ><span class="font-semibold text-blue-800">.AI</span></a
+        >
+      </div>
       <div>
         <h2
-          class="mt-6 text-center text-4xl font-extrabold text-gray-900 dark:text-white"
+          class="mt-10 text-center text-xl font-extrabold text-gray-900 dark:text-white"
         >
-          Sign in to your account
+          {{ $t("login.title") }}
         </h2>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
@@ -99,7 +118,7 @@
                 />
               </svg>
             </span>
-            {{ isLoading ? "Signing in..." : "Sign in" }}
+            {{ isLoading ? $t("login.btn.signingIn") : $t("login.btn.login") }}
           </button>
         </div>
       </form>

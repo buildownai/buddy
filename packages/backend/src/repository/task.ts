@@ -82,7 +82,17 @@ export const taskRepository = {
 
     const absolutePath = prj.localFolder ?? join(config.tempDir, projectId, file)
 
-    await db.insert(taskTable, {
+    const existing = await db.query<[TaskReadDb[]]>(
+      'SELECT id FROM task WHERE status=$status AND kind=$kind AND payload.file=$file AND branch=$branch',
+      {
+        status: TaskStatus.PENDING,
+        kind: TaskKind.INDEX_FILE,
+        file: `/${file}`,
+        branch,
+      }
+    )
+
+    const t = {
       project: new RecordId('project', projectId),
       status: TaskStatus.PENDING,
       kind: TaskKind.INDEX_FILE,
@@ -93,7 +103,14 @@ export const taskRepository = {
           encoding: 'utf-8',
         }),
       },
-    })
+    }
+
+    if (existing[0].length) {
+      await db.merge(existing[0][0].id, t)
+      return
+    }
+
+    await db.insert(taskTable, t)
   },
   getNextPendingTask: async () => {
     const db = await getDb()

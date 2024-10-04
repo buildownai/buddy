@@ -9,6 +9,8 @@ export interface User {
   id: string
   email: string
   name: string
+  language: string
+  createdAt: string
 }
 
 export interface ApiError {
@@ -29,11 +31,14 @@ export interface Project {
 
 export interface Conversation {
   id: string
+  createdAt: string
+  summary: string
   messages: ChatMessage[]
 }
 
 export interface ConversationHistory {
   id: string
-  content: string
+  summary: string
   createdAt: string
+  content: string
 }

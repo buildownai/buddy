@@ -1,3 +1,5 @@
+import { backbone } from '../backbone/index.js'
+import { deleteFile, putFile } from '../store/browserEnv.js'
 import type { TreeViewItem } from '../types/file.js'
 import { BaseApi } from './base.js'
 import type { Project } from './types.js'
@@ -27,5 +29,20 @@ export class ProjectApi extends BaseApi {
         content,
       }),
     })
+    if (response.ok) {
+      putFile(path, content)
+      backbone.emit('file_upserted', { path })
+    }
+  }
+
+  static async deleteFile(projectId: string, path: string): Promise<void> {
+    const p = path.startsWith('/') ? path.slice(1) : path
+    const response = await ProjectApi.fetch(`/v1/projects/${projectId}/files/${p}`, {
+      method: 'delete',
+    })
+    if (response.ok) {
+      deleteFile(path)
+      backbone.emit('file_upserted', { path })
+    }
   }
 }

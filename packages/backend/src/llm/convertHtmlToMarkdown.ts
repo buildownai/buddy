@@ -1,19 +1,23 @@
-import { config } from '../config.js'
-import { getNewLLM } from './getNewLLM.js'
+import { config } from "../config.js";
+import { llmDefaultOptions } from "../defaults/llmDefaultOptions.js";
+import { getNewLLM } from "./getNewLLM.js";
 
 export const convertHtmlToMarkdown = async (content: string) => {
-  const llm = getNewLLM()
+  const llm = getNewLLM();
 
-  const response = await llm.generate({
+  const response = await llm.chat.completions.create({
     model: config.llm.models.html,
-    prompt: content,
-    system:
-      'Convert the content into a markdown format without any further explanation or suggestion. Include links and images if possible. Ensure valid full urls and links',
+    messages: [
+      {
+        role: "system",
+        content:
+          "Convert the content into a markdown format without any further explanation or suggestion. Include links and images if possible. Ensure valid full urls and links",
+      },
+      { role: "user", content },
+    ],
     stream: false,
-    options: {
-      temperature: 0,
-    },
-  })
+    ...llmDefaultOptions,
+  });
 
-  return response.response
-}
+  return response.choices[0]?.message?.content ?? "";
+};

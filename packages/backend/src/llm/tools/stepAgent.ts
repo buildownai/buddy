@@ -22,7 +22,7 @@ const paramSchema = z.object({
   ),
 })
 
-export const toolStepAgent: ToolEntry = {
+export const toolStepAgent: ToolEntry = (projectId:string)=>{
   fn: async (input: unknown, sendSSE) => {
     const log = logger.child({ tool: 'step_agent' })
     try {

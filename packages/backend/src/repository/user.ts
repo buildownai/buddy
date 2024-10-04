@@ -6,6 +6,7 @@ export type UserDb = {
   id: RecordId
   email: string
   name: string
+  language: string
   createdAt: Date
   updatedAt: Date
 }

@@ -19,9 +19,11 @@ const meRoute = createRoute({
       content: {
         'application/json': {
           schema: z.object({
+            id: z.string().describe('The ID of the user'),
             email: z.string().email().describe("User's email address"),
             name: z.string().describe('The users name'),
-            created: z.string().datetime().describe('Creation date of the user'),
+            language: z.string().describe('The preferred user language'),
+            createdAt: z.string().datetime().describe('Creation date of the user'),
           }),
           example: {
             name: 'John Doe',

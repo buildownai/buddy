@@ -1,9 +1,9 @@
 <template>
-    <MessageItem
-      v-for="(message, index) in messages"
-      :key="index"
-      :message="message"
-    />
+  <MessageItem
+    v-for="(message, index) in messages"
+    :key="index"
+    :message="message"
+  />
 </template>
 
 <script setup lang="ts">

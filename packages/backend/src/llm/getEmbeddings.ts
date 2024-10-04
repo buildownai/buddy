@@ -1,5 +1,5 @@
-import { config } from '../config.js'
-import { getNewLLM } from './getNewLLM.js'
+import { config } from "../config.js";
+import { getNewLLM } from "./getNewLLM.js";
 
 /**
  * Create embeddings for a string or an array of strings
@@ -9,13 +9,17 @@ import { getNewLLM } from './getNewLLM.js'
 export const getEmbeddings = async <T extends string | string[]>(
   input: T
 ): Promise<T extends string ? number[] : number[][]> => {
-  const llm = getNewLLM()
-  const embeddings = await llm.embed({
-    model: config.llm.models.embeddings,
-    input,
-    keep_alive: 60000,
-  })
+  const llm = getNewLLM();
+  const embeddings = await llm.embeddings.create(
+    {
+      model: config.llm.models.embeddings,
+      input,
+    },
+    {}
+  );
   return (
-    typeof input === 'string' ? embeddings.embeddings[0] : embeddings.embeddings
-  ) as T extends string ? number[] : number[][]
-}
+    typeof input === "string"
+      ? embeddings.data[0].embedding
+      : embeddings.data.map((d) => d.embedding)
+  ) as T extends string ? number[] : number[][];
+};

@@ -69,6 +69,8 @@ Once everything is ready, open your browser and navigate to:
 
 You should see the login screen, where you can sign in using the default credentials mentioned above.
 
+The backend API provides a OpenAPI UI at [http://localhost:5173/api](http://localhost:5173/api)
+
 ### Configuration
 
 You can customize **BuildOwn.AI Pilot** by setting environment variables. Since Bun is used as the runtime, you can simply create a `.env` file in the root of the project to manage your configuration. For example:

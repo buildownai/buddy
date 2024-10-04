@@ -28,10 +28,18 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/AddRepo.vue'),
       },
       {
-        path: ':projectId/chat',
-        name: 'ProjectChat',
-        component: () => import('../views/ProjectChat.vue'),
+        path: ':projectId',
+        name: '',
+        component: () => import('../layouts/LeftNavLayout.vue'),
         props: true,
+        children: [
+          {
+            path: 'code',
+            name: 'ProjectChat',
+            component: () => import('../views/ProjectChat.vue'),
+            props: true,
+          },
+        ],
       },
       // Add other routes that use DefaultLayout here
     ],

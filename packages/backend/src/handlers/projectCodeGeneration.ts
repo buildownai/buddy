@@ -1,35 +1,36 @@
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { streamSSE } from 'hono/streaming'
-import { fillInTheMiddleCode } from '../llm/index.js'
-import logger from '../logger.js'
-import { generateCode } from '../ollama.js'
-import type { JWTPayload, SendSSEFunction } from '../types/index.js'
-import { errorResponse } from './errorResponse.js'
-import { protectProjectRouteMiddleware } from './protectProjectRouteMiddleware.js'
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { streamSSE } from "hono/streaming";
+import { applyChanges, fillInTheMiddleCode } from "../llm/index.js";
+import logger from "../logger.js";
+import type { JWTPayload, SendSSEFunction } from "../types/index.js";
+import { errorResponse } from "./errorResponse.js";
+import { protectProjectRouteMiddleware } from "./protectProjectRouteMiddleware.js";
 
-type Variables = { jwtPayload: JWTPayload }
+type Variables = { jwtPayload: JWTPayload };
 
-const app = new OpenAPIHono<{ Variables: Variables }>()
+const app = new OpenAPIHono<{ Variables: Variables }>();
 
-app.use('*', protectProjectRouteMiddleware)
+app.use("*", protectProjectRouteMiddleware);
 
 const fillInTheMiddleCodeRoute = createRoute({
-  method: 'post',
-  path: '/{projectId}/fill-middle-code',
+  method: "post",
+  path: "/{projectId}/fill-middle-code",
   security: [{ Bearer: [] }],
-  description: 'One time shoot for fill in the middle (autocomplete) tasks',
-  tags: ['AI-Chat'],
+  description: "One time shoot for fill in the middle (autocomplete) tasks",
+  tags: ["AI-Chat"],
   request: {
     params: z.object({
-      projectId: z.string().describe('The ID of the project'),
+      projectId: z.string().describe("The ID of the project"),
     }),
     body: {
       content: {
-        'application/json': {
+        "application/json": {
           schema: z.object({
-            message: z.string().describe('The message to send'),
-            suffix: z.string().describe('TThe optional suffix for fill in the middle'),
-            language: z.string().describe('The language hint'),
+            message: z.string().describe("The message to send"),
+            suffix: z
+              .string()
+              .describe("TThe optional suffix for fill in the middle"),
+            language: z.string().describe("The language hint"),
           }),
         },
       },
@@ -37,51 +38,54 @@ const fillInTheMiddleCodeRoute = createRoute({
   },
   responses: {
     200: {
-      description: 'FIM code compleetion suggestion',
+      description: "FIM code compleetion suggestion",
       content: {
-        'text/plain': {
+        "text/plain": {
           schema: z.string(),
         },
       },
     },
     ...errorResponse,
   },
-})
+});
 
 app.openapi(fillInTheMiddleCodeRoute, async (c) => {
-  const { projectId } = c.req.valid('param')
-  const { message, suffix, language } = c.req.valid('json')
+  const { projectId } = c.req.valid("param");
+  const { message, suffix, language } = c.req.valid("json");
 
-  logger.info({ projectId }, 'Starting fill in the middle generation')
+  logger.info({ projectId }, "Starting fill in the middle generation");
 
-  const response = await fillInTheMiddleCode(projectId, message, suffix, language)
+  const response = await fillInTheMiddleCode(
+    projectId,
+    message,
+    suffix,
+    language
+  );
 
-  logger.debug({ response }, 'fill in the middle response')
+  logger.debug({ response }, "fill in the middle response");
 
-  return c.text(response, 200)
-})
+  return c.text(response, 200);
+});
 
-const generateCodeRoute = createRoute({
-  method: 'post',
-  path: '/{projectId}/generate-code',
+const applyCodeRoute = createRoute({
+  method: "post",
+  path: "/{projectId}/apply-code",
   security: [{ Bearer: [] }],
   description:
-    'One time shoot for generating code or fill in the middle (autocomplete) tasks. Send a message to the project generate and receive a response via SSE',
-  tags: ['AI-Chat'],
+    "Apply code changes to existing code. Send a message to the project generate and receive a response via SSE",
+  tags: ["AI-Chat"],
   request: {
     params: z.object({
-      projectId: z.string().describe('The ID of the project'),
+      projectId: z.string().describe("The ID of the project"),
     }),
     body: {
       content: {
-        'application/json': {
+        "application/json": {
           schema: z.object({
-            message: z.string().describe('The message to send'),
-            suffix: z.string().optional().describe('TThe optional suffix for fill in the middle'),
-            conversationId: z
+            original: z.string().describe("The original code"),
+            codeToApply: z
               .string()
-              .optional()
-              .describe('The ID of the conversation, if continuing an existing one'),
+              .describe("The code to apply on the original code"),
           }),
         },
       },
@@ -89,11 +93,11 @@ const generateCodeRoute = createRoute({
   },
   responses: {
     200: {
-      description: 'Successful response with SSE stream',
+      description: "Successful response with SSE stream",
       content: {
-        'text/event-stream': {
+        "text/event-stream": {
           schema: z.object({
-            event: z.enum(['start', 'token', 'end', 'error']),
+            event: z.enum(["start", "token", "end", "error"]),
             data: z.string(),
           }),
         },
@@ -101,55 +105,60 @@ const generateCodeRoute = createRoute({
     },
     ...errorResponse,
   },
-})
+});
 
-app.openapi(generateCodeRoute, async (c) => {
-  const { projectId } = c.req.valid('param')
-  const { message, conversationId, suffix } = c.req.valid('json')
+app.openapi(applyCodeRoute, async (c) => {
+  const { projectId } = c.req.valid("param");
+  const { original, codeToApply } = c.req.valid("json");
 
-  logger.info({ projectId, conversationId }, 'Starting code generation')
+  logger.info({ projectId }, "Applying code");
 
   return streamSSE(
     c,
     async (stream) => {
-      let id = 0
+      let id = 0;
 
       stream.onAbort(() => {
-        logger.debug('SSE stream aborted!')
-      })
+        logger.debug("SSE stream aborted!");
+      });
 
-      const sendSSE: SendSSEFunction = async (event, content) =>
+      const sendSSE: SendSSEFunction = async (event) =>
         stream.writeSSE({
-          data: JSON.stringify({ event, content }),
-          event,
+          data: JSON.stringify(event),
+          event: event.event,
           id: String(id++),
-        })
+        });
 
       try {
-        await sendSSE('start', 'Thinking...')
-
-        const responseGenerator = await generateCode(
+        const responseGenerator = await applyChanges(
           projectId,
-          conversationId ?? '1',
-          message,
-          suffix
-        )
+          original,
+          codeToApply
+        );
 
         for await (const token of responseGenerator) {
-          await sendSSE('token', token.response)
+          await sendSSE({
+            event: "token",
+            content: token.choices[0]?.delta?.content ?? "",
+            role: "assistent",
+          });
         }
-
-        await sendSSE('end', 'Finished')
       } catch (error) {
-        logger.error({ error, projectId, conversationId }, 'Error during chat response generation')
-        await sendSSE('error', error instanceof Error ? error.message : 'An unknown error occurred')
+        logger.error({ error, projectId }, "Error during apply code");
+        await sendSSE({
+          event: "error",
+          content:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+        });
       }
     },
     async (err, stream) => {
-      logger.error({ err }, 'Error in SSE stream')
-      await stream.close()
+      logger.error({ err }, "Error in SSE stream");
+      await stream.close();
     }
-  ) as any
-})
+  ) as any;
+});
 
-export { app as projectCodeGeneration }
+export { app as projectCodeGeneration };

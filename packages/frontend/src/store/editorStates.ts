@@ -24,6 +24,7 @@ import {
   syntaxHighlighting,
 } from '@codemirror/language'
 import { lintKeymap } from '@codemirror/lint'
+import { getChunks } from '@codemirror/merge'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
 import { Compartment, EditorState, type Extension, Prec } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
@@ -53,6 +54,23 @@ import { getBrowserEnv } from './browserEnv.js'
 import { useTheme } from './index.js'
 
 const editorStates = new Map<string, EditorState>()
+
+const mergeEditorStates = new Map<string, EditorState>()
+
+export const getMergeState = async (projectId: string, path: string) => {
+  const s = mergeEditorStates.get(`${projectId}-${path}`)
+  if (s) {
+    return s
+  }
+}
+
+export const setMergeState = async (projectId: string, path: string, state: EditorState) => {
+  mergeEditorStates.set(`${projectId}-${path}`, state)
+}
+
+export const removeMergeState = async (projectId: string, path: string) => {
+  mergeEditorStates.delete(`${projectId}-${path}`)
+}
 
 const getLanguageFromPath = (path: string) => {
   const splitted = path.split('.')
@@ -117,8 +135,8 @@ const getLanguageFromPath = (path: string) => {
       return { modules: [json()], lng: 'json' }
     default:
       return {
-        modules: [javascript({ jsx: true, typescript: true })],
-        lng: 'typescript',
+        modules: [],
+        lng: 'text',
       }
   }
 }
@@ -139,7 +157,14 @@ export const getState = async (projectId: string, path: string) => {
   }
 }
 
-export const createState = async (projectId: string, path: string, doc: string) => {
+export const removeState = (projectId: string, path: string) =>
+  editorStates.delete(`${projectId}-${path}`)
+
+export const createExtensions = async (
+  projectId: string,
+  path: string,
+  isRegularEditView = true
+) => {
   const language = getLanguageFromPath(path)
 
   const { isDarkmode } = useTheme()
@@ -153,21 +178,6 @@ export const createState = async (projectId: string, path: string, doc: string) 
     foldGutter(),
     drawSelection(),
     dropCursor(),
-    Prec.highest(
-      keymap.of([
-        {
-          key: 'Ctrl-s',
-          mac: 'Cmd-s',
-          run: (editor) => {
-            backbone.emit('save_file', {
-              code: editor.state.doc.toString(),
-              filename: path,
-            })
-            return true
-          },
-        },
-      ])
-    ),
     keymap.of([indentWithTab]),
     EditorState.allowMultipleSelections.of(true),
     indentOnInput(),
@@ -188,13 +198,39 @@ export const createState = async (projectId: string, path: string, doc: string) 
       ...completionKeymap,
       ...lintKeymap,
     ]),
-    inlineCopilot(async (prefix, suffix) => {
-      const result = await ChatApi.getCompletion(projectId, prefix, suffix, language.lng)
-      const prediction = result
-      return prediction
-    }),
+    Prec.highest(
+      keymap.of([
+        {
+          key: 'Ctrl-s',
+          mac: 'Cmd-s',
+          run: (editor) => {
+            const chunks = getChunks(editor.state)
+            if (!chunks?.chunks.length) {
+              backbone.emit('save_file', {
+                code: editor.state.doc.toString(),
+                filename: path,
+              })
+            } else {
+              alert('You need to solve merge conflicts before save')
+            }
+
+            return true
+          },
+        },
+      ])
+    ),
     ...language.modules,
   ]
+
+  if (isRegularEditView) {
+    extensions.push(
+      inlineCopilot(async (prefix, suffix) => {
+        const result = await ChatApi.getCompletion(projectId, prefix, suffix, language.lng)
+        const prediction = result
+        return prediction
+      })
+    )
+  }
 
   if (language.lng === 'typescript') {
     extensions.push(
@@ -220,14 +256,20 @@ export const createState = async (projectId: string, path: string, doc: string) 
     )
   }
 
+  return extensions
+}
+
+export const createState = async (projectId: string, path: string, doc: string) => {
+  const extensions = await createExtensions(projectId, path)
   const state = EditorState.create({
     doc,
     extensions,
   })
-
   editorStates.set(`${projectId}-${path}`, state)
   return state
 }
 
-export const removeState = (projectId: string, path: string) =>
-  editorStates.delete(`${projectId}-${path}`)
+export const clearStates = async () => {
+  editorStates.clear()
+  mergeEditorStates.clear()
+}

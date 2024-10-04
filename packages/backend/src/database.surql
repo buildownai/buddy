@@ -3,6 +3,7 @@ DEFINE TABLE IF NOT EXISTS user SCHEMAFULL COMMENT "Holds the user information";
 DEFINE FIELD IF NOT EXISTS email ON user TYPE string VALUE string::lowercase($value) ASSERT string::is::email($value) COMMENT "The email of the user";
 DEFINE FIELD IF NOT EXISTS name ON user TYPE string COMMENT "The natural name of the user";
 DEFINE FIELD IF NOT EXISTS password ON user TYPE string VALUE crypto::argon2::generate($value) COMMENT "The encrypted password of the user";
+DEFINE FIELD IF NOT EXISTS language ON user TYPE string DEFAULT "en" COMMENT "The preferred user language";
 DEFINE FIELD IF NOT EXISTS createdAt ON user DEFAULT time::now() READONLY COMMENT "Creation date of the user";
 DEFINE FIELD IF NOT EXISTS updatedAt ON TABLE user TYPE datetime VALUE time::now() COMMENT "Date time when the user was updated";
 
@@ -36,10 +37,11 @@ DEFINE FIELD IF NOT EXISTS branch ON TABLE knowledge TYPE option<string> COMMENT
 DEFINE FIELD IF NOT EXISTS createdAt ON knowledge DEFAULT time::now() READONLY COMMENT "Creation date of the knowledge entry";
 DEFINE FIELD IF NOT EXISTS updatedAt ON TABLE knowledge TYPE datetime VALUE time::now() COMMENT "Date time when the knowledge entry was updated";
 
-DEFINE INDEX IF NOT EXISTS knowledge_idx ON TABLE knowledge COLUMNS embedding MTREE DIMENSION 768 COMMENT "Index of the embedding vecotors";
+DEFINE INDEX IF NOT EXISTS knowledge_idx ON TABLE knowledge COLUMNS embedding MTREE DIMENSION $EMBEDDING_SIZE COMMENT "Index of the embedding vecotors";
 
 -- Chat Conversation
 DEFINE TABLE IF NOT EXISTS chat_conversation COMMENT "A chat conversation";
+DEFINE FIELD IF NOT EXISTS summary ON TABLE knowledge TYPE string DEFAULT "" COMMENT "Summary of the conversation";
 DEFINE FIELD IF NOT EXISTS project ON TABLE knowledge TYPE record<project> COMMENT "The project to which this conversation relates";
 DEFINE FIELD IF NOT EXISTS createdAt ON TABLE chat_conversation TYPE datetime VALUE time::now() READONLY COMMENT "Date time when the chat conversation was started";
 
@@ -59,6 +61,8 @@ DEFINE FIELD IF NOT EXISTS kind ON TABLE task TYPE string COMMENT "The task kind
 DEFINE FIELD IF NOT EXISTS createdAt ON TABLE task TYPE datetime VALUE time::now() READONLY COMMENT "Date time when the task was created";
 DEFINE FIELD IF NOT EXISTS updatedAt ON TABLE task TYPE datetime VALUE time::now() COMMENT "Date time when the task was updated";
 DEFINE FIELD IF NOT EXISTS payload ON TABLE task FLEXIBLE TYPE object COMMENT "The payload of the task";
+
+DEFINE INDEX IF NOT EXISTS task_exist_loopkup_idx ON TABLE task COLUMNS status,kind,payload.file,payload.branch COMMENT "Search index by status, kind, file and branch";
 
 -- Example data
 INSERT INTO user { email: "user@example.com", name:"John Doe" , password: 'password' } ON DUPLICATE KEY UPDATE password= 'password';
