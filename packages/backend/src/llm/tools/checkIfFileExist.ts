@@ -1,39 +1,47 @@
-import { existsSync, statSync } from 'node:fs'
-import { join } from 'node:path'
-import { z } from 'zod'
-import { zodToJsonSchema } from 'zod-to-json-schema'
-import { config } from '../../config.js'
-import logger from '../../logger.js'
-import { validateParams } from './toolHelper.js'
+import { existsSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import { config } from "../../config.js";
+import logger from "../../logger.js";
+import { validateParams } from "./toolHelper.js";
 
 const paramSchema = z.object({
-  path: z.string().describe('The path to the file or deirectory'),
-})
+  path: z.string().describe("The path to the file or deirectory"),
+});
 
 export const toolCheckIfFileExist = (projectId: string) => {
   return {
-    type: 'function' as const,
+    type: "function" as const,
     function: {
       parse: JSON.parse,
       function: async (input: unknown) => {
         try {
-          const { path } = validateParams(paramSchema, input)
-          const p = join(config.tempDir, projectId, path)
-          const exists = existsSync(p)
+          const { path } = validateParams(paramSchema, input);
+          const p = join(config.tempDir, projectId, path);
+          const exists = existsSync(p);
           if (!exists) {
-            return `File or directory ${path} does not exist in the project`
+            return `File or directory ${path} does not exist in the project`;
           }
-          const stat = statSync(p)
+          const stat = statSync(p);
 
-          return `${stat.isDirectory() ? 'Directory' : 'File'} ${path} exists in the project`
+          if (stat.isDirectory()) {
+            return `Directory \`${path}\` exists. You must use the tool get_folder_structure to get list of files and subfolders.`;
+          }
+
+          return `File \`${path}\` exists. You must use the tool read_file to get the file content.`;
         } catch (err) {
-          logger.error({ err, input }, 'Wrong input in tool call write_file')
-          return 'Error: Sorry, but unable to write file'
+          logger.error(
+            { err, input },
+            "Wrong input in tool call check_if_file_exist"
+          );
+          return "Error: Sorry, but unable tocheck file";
         }
       },
-      name: 'check_if_file_exist',
-      description: 'Checks if the given file or directory exists in the project',
+      name: "check_if_file_exist",
+      description:
+        "Checks if the given file or directory exists in the project. Do not use when you need the file content.",
       parameters: zodToJsonSchema(paramSchema) as any,
     },
-  }
-}
+  };
+};

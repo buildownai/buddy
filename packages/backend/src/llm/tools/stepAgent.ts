@@ -139,7 +139,7 @@ Try to categorize the output in success or fail.
       return 'Error: Sorry, but unable to read file'
     }
   },
-  schema: 
+  schema:
     type: 'function',
     function: {
       name: 'step_agent',

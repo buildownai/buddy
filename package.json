@@ -2,18 +2,33 @@
   "name": "@buildownai/pilot",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/*"],
+  "description": "Showcase to build a AI driven IDE in the browser as an example from the book Build Your Own AI",
+  "author": {
+    "name": "Sebastian Wessel",
+    "url": "https://buildown.ai"
+  },
+  "repository": {
+    "url": "https://github.com/buildownai/pilot"
+  },
+  "license": "CC BY-NC 4.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
   "scripts": {
     "start:frontend": "bun run --cwd packages/frontend dev",
     "start:backend": "bun run --cwd packages/backend start",
     "dev": "bun --watch packages/backend/src/index.ts & bun run start:frontend",
+    "model": "ollama create buildownai/qwen14b -f ./Modelfile",
     "lint": "biome lint .",
     "format": "biome format . --write",
     "check": "biome check --write --unsafe .",
     "db": "docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root --allow-all memory"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.3"
-  }
+    "@biomejs/biome": "^1.9.4"
+  },
+  "trustedDependencies": [
+    "@biomejs/biome"
+  ]
 }

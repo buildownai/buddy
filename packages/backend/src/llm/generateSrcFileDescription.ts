@@ -1,43 +1,36 @@
-import { config } from '../config.js'
-import { llmDefaultOptions } from '../defaults/llmDefaultOptions.js'
-import { getNewLLM } from './getNewLLM.js'
+import { config } from "../config.js";
+import { llmDefaultOptions } from "../defaults/llmDefaultOptions.js";
+import logger from "../logger.js";
+import { getNewLLM } from "./getNewLLM.js";
+import { getSystemPrompt } from "./getSystemPrompt.js";
 
-export const generateSrcFileDescription = async (content: string, file: string) => {
-  const llm = getNewLLM()
+export const generateSrcFileDescription = async (
+  content: string,
+  file: string
+) => {
+  const llm = getNewLLM();
+  logger.debug({ file }, "start generating src file description");
   const response = await llm.chat.completions.create({
     model: config.llm.models.small,
     messages: [
       {
-        role: 'system',
-        content: `You are an AI which generates a short summarization for the file \`${file}\`
-        It will be used by an AI RAG.
-        Also include a detailed list of defined dependencies.
-        Include all defined exports with a description of the purpose.
-        A general example is not required`,
-        /*
-        content: `You are an AI which generates documentation for the file ${file}
-
-1. Analyze the code to understand its structure and functionality.
-2. Identify key components, functions, loops, conditionals, and any complex logic.
-
-Explain and describe:
-- the used dependencies
-- the exports
-- functions / methods
-- classes with all public, private and protected methods, getters and setters
-- exported type and/or interface definitions
-
-Do not mention them if they are not present in the file.
-
-The description for functions and methods should also include a description of input parameter and output/result.
-`,
-*/
+        role: "system",
+        content: getSystemPrompt("GenSrcFileDescription", file),
       },
-      { role: 'user', content },
+      { role: "user", content },
     ],
-    stream: false,
+    stream: true,
     ...llmDefaultOptions,
-  })
+  });
 
-  return response.choices[0]?.message?.content ?? ''
-}
+  let result = "";
+
+  for await (const chunk of response) {
+    const content = chunk.choices[0]?.delta.content;
+    if (content) {
+      result += content;
+    }
+  }
+
+  return result;
+};

@@ -1,61 +1,70 @@
-import { readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
-import { z } from 'zod'
-import zodToJsonSchema from 'zod-to-json-schema'
-import { config } from '../../config.js'
-import logger from '../../logger.js'
-import type { ToolEntry } from '../../types/index.js'
-import { validateParams } from './toolHelper.js'
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { z } from "zod";
+import zodToJsonSchema from "zod-to-json-schema";
+import { config } from "../../config.js";
+import logger from "../../logger.js";
+import type { ToolEntry } from "../../types/index.js";
+import { validateParams } from "./toolHelper.js";
 
 const paramSchema = z.object({
   path: z
     .string()
     .optional()
-    .default('')
-    .describe('The absolute path of the sub folder of the project'),
-})
+    .default("")
+    .describe("The absolute path of the sub folder of the project"),
+});
 
 export const toolGetFolderStructure = (projectId: string) => {
   return {
-    type: 'function' as const,
+    type: "function" as const,
     function: {
       parse: JSON.parse,
       function: async (input: unknown) => {
         try {
-          const { path } = validateParams(paramSchema, input)
-          const p = join(config.tempDir, projectId, path)
-          let folderStructure = ''
+          const { path } = validateParams(paramSchema, input);
+          const p = join(config.tempDir, projectId, path);
+          let folderStructure = "";
 
           const walk = (dir: string, indent = 0) => {
-            const files = readdirSync(dir)
+            const files = readdirSync(dir);
 
             for (const file of files) {
-              if (['.git', '.DS_Store', 'node_modules', '.zed', '.vscode'].includes(file)) {
-                continue
+              if (
+                [
+                  ".git",
+                  ".DS_Store",
+                  "node_modules",
+                  ".zed",
+                  ".vscode",
+                ].includes(file)
+              ) {
+                continue;
               }
-              const f = join(dir, file)
-              const stat = statSync(f)
+              const f = join(dir, file);
+              const stat = statSync(f);
               if (stat.isDirectory()) {
-                folderStructure += `${' '.repeat(indent)}|- ${file} (directory)\n`
-                walk(f, indent + 1)
+                folderStructure += `${" ".repeat(
+                  indent
+                )}|- ${file} (directory)\n`;
+                walk(f, indent + 1);
               } else {
-                folderStructure += `${' '.repeat(indent)}|- ${file} (file)\n`
+                folderStructure += `${" ".repeat(indent)}|- ${file} (file)\n`;
               }
             }
-          }
+          };
 
-          walk(p)
+          walk(p);
 
-          return folderStructure
+          return folderStructure;
         } catch (err) {
-          logger.error({ err, input }, 'Wrong input in tool call read_file')
-          return 'Error: Sorry, but unable to read file'
+          logger.error({ err, input }, "Wrong input in tool call read_file");
+          return "Error: Sorry, but unable to read file";
         }
       },
-      name: 'get_folder_file_strcuture',
-      description:
-        'Get folder and file structure or the project or of a given sub folder of a project',
+      name: "get_folder_structure",
+      description: "Get folder structure",
       parameters: zodToJsonSchema(paramSchema) as any,
     },
-  }
-}
+  };
+};

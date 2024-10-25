@@ -1,28 +1,31 @@
 {
   "name": "@buildownai/pilot-backend",
   "version": "1.0.0",
+  "private": true,
+  "license": "CC BY-NC 4.0",
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch src/index.ts"
   },
   "type": "module",
   "dependencies": {
-    "@hono/zod-openapi": "^0.16.3",
-    "@scalar/hono-api-reference": "^0.5.150",
+    "@hono/zod-openapi": "^0.16.4",
+    "@scalar/hono-api-reference": "^0.5.156",
     "@typescript/ata": "^0.9.7",
-    "hono": "^4.6.3",
+    "hono": "^4.6.6",
     "ollama": "^0.5.9",
-    "openai": "^4.67.1",
-    "pino": "^9.4.0",
+    "openai": "^4.68.4",
+    "pino": "^9.5.0",
     "simple-git": "^3.27.0",
     "surrealdb": "^1.0.6",
     "zod": "^3.23.8",
-    "zod-to-json-schema": "^3.23.3"
+    "zod-to-json-schema": "^3.23.5"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.10",
-    "@types/node": "^22.7.4",
-    "pino-pretty": "^11.2.2",
-    "type-fest": "^4.26.1"
+    "@types/bun": "^1.1.12",
+    "@types/node": "^22.7.9",
+    "pino-pretty": "^11.3.0",
+    "type-fest": "^4.26.1",
+    "typescript": "^5.6.3"
   }
 }

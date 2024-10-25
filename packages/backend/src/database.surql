@@ -37,7 +37,7 @@ DEFINE FIELD IF NOT EXISTS branch ON TABLE knowledge TYPE option<string> COMMENT
 DEFINE FIELD IF NOT EXISTS createdAt ON knowledge DEFAULT time::now() READONLY COMMENT "Creation date of the knowledge entry";
 DEFINE FIELD IF NOT EXISTS updatedAt ON TABLE knowledge TYPE datetime VALUE time::now() COMMENT "Date time when the knowledge entry was updated";
 
-DEFINE INDEX IF NOT EXISTS knowledge_idx ON TABLE knowledge COLUMNS embedding MTREE DIMENSION $EMBEDDING_SIZE COMMENT "Index of the embedding vecotors";
+DEFINE INDEX IF NOT EXISTS knowledge_idx ON TABLE knowledge COLUMNS embedding MTREE DIMENSION $EMBEDDING_SIZE COMMENT "Index of the embedding vectors";
 
 -- Chat Conversation
 DEFINE TABLE IF NOT EXISTS chat_conversation COMMENT "A chat conversation";
