@@ -35,6 +35,13 @@
   "dialog.createFile.message": "The file does not exist yet.\n\n{path}\n\nShould I create it?",
   "dialog.createFile.btn.yes": "Create File",
   "dialog.createFile.btn.no": "Cancel",
+
+  "dialog.unsavedFileChanges.title": "⚠️ Unsaved Changes",
+  "dialog.unsavedFileChanges.message": "There are unsaved changes.\nDo you want to save the changes, discard the changes, or abort the closing of the file?",
+  "dialog.unsavedFileChanges.btn.save": "Save & Close",
+  "dialog.unsavedFileChanges.btn.discard": "Discard & Close",
+  "dialog.unsavedFileChanges.btn.cancel": "Cancel",
+
   "dialog.error.loadProject.title": "⛔️ Failed to load Project",
   "dialog.error.loadProject.message": "I am sorry, but the project could not be loaded.\n\nReason: {errorMessage}",
   "dialog.error.loadProject.btn.retry": "Retry",
@@ -48,7 +55,7 @@
   "toolcall.createDirectory": "Create directory",
   "toolcall.fetchWebpage": "Fetch website",
   "toolcall.getFolderStructure": "Get folder structure",
-  "toolcall.npmPackageInfo": "Get npm package info for {name}@{version}",
+  "toolcall.npmPackageInfo": "Get npm package info for {name} ({version})",
   "toolcall.getContext": "Search knowledge base",
   "toolcall.writeFile": "Write file",
   "toolcall.unknownTool": "Use a tool"

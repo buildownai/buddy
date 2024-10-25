@@ -7,11 +7,11 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { getChunks, unifiedMergeView } from '@codemirror/merge'
-import { EditorState } from '@codemirror/state'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { EditorView } from '@codemirror/view'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { getChunks, unifiedMergeView } from "@codemirror/merge";
+import { EditorState } from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   createExtensions,
   getMergeState,
@@ -20,127 +20,147 @@ import {
   setMergeState,
   themeCompartment,
   updateState,
-} from '../store/editorStates.js'
-import { useTheme } from '../store/index.js'
+} from "../store/editorStates.js";
+import { useTheme } from "../store/index.js";
 
-const editor = ref<HTMLElement | null>(null)
+const editor = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
-  fileName: string
-  projectId: string
-}>()
+  fileName: string;
+  projectId: string;
+}>();
 
-const { isDarkmode } = useTheme()
+const { isDarkmode } = useTheme();
 
-let view: EditorView
+let view: EditorView;
 
 onMounted(async () => {
-  const state = await getState(props.projectId, props.fileName)
+  const state = await getState(props.projectId, props.fileName);
   view = new EditorView({
     parent: editor.value as HTMLElement,
     state,
-  })
-})
+  });
+});
 
 onBeforeUnmount(() => {
-  view?.destroy()
-})
+  view?.destroy();
+});
 
 watch(
   () => props.fileName,
   async (current, prev) => {
     // remember current editor state before switching to a other state
     if (view) {
-      updateState(props.projectId, prev, view.state)
+      updateState(props.projectId, prev, view.state);
     }
 
-    const state = await getState(props.projectId, current)
+    const state = await getState(props.projectId, current);
     if (state) {
-      view?.setState(state)
+      view?.setState(state);
     }
   }
-)
+);
 
 watch(isDarkmode, () => {
-  const newTheme = isDarkmode() ? oneDark : []
+  const newTheme = isDarkmode() ? oneDark : [];
   view.dispatch({
     effects: themeCompartment.reconfigure(newTheme),
-  })
-})
+  });
+});
 
 function appendCode(insert: string) {
   view.dispatch({
     changes: { from: view.state.doc.length, insert },
-  })
+  });
+}
+
+function replaceCode(insert: string) {
+  view.dispatch({
+    changes: {
+      from: 0,
+      to:
+        view.state.doc.length >= insert.length
+          ? insert.length
+          : view.state.doc.length,
+      insert,
+    },
+  });
 }
 
 async function switchToMergeView() {
-  setMergeState(props.projectId, props.fileName, view.state)
-  const extensions = await createExtensions(props.projectId, props.fileName, false)
+  const original = view.state.doc.toString();
+  await setMergeState(props.projectId, props.fileName, view.state);
+
+  const extensions = await createExtensions(
+    props.projectId,
+    props.fileName,
+    false
+  );
 
   const newState = EditorState.create({
-    doc: '',
+    doc: "___",
     extensions: [
       ...extensions,
-      EditorView.updateListener.of((update) => {
+      EditorView.updateListener.of(async (update) => {
         if (update.transactions) {
           for (const tr of update.transactions) {
-            if (tr.isUserEvent('accept')) {
-              console.log('accepted')
-            } else if (tr.isUserEvent('revert')) {
-              console.log('revert')
+            if (tr.isUserEvent("accept")) {
+              console.log("accepted");
+            } else if (tr.isUserEvent("revert")) {
+              console.log("revert");
             }
-
-            const chunks = getChunks(tr.state)
+            const chunks = getChunks(tr.state);
             if (chunks?.chunks.length === 0) {
-              switchToEditView()
+              await switchToEditView();
             }
           }
+          view?.focus();
         }
       }),
       unifiedMergeView({
-        original: view.state.doc.toString(),
+        original,
         highlightChanges: true,
         gutter: true,
         mergeControls: true,
       }),
     ],
-  })
+  });
 
-  view?.setState(newState)
+  view?.setState(newState);
 }
 
 async function switchToEditView() {
-  const newContent = view.state.doc.toString()
+  const newContent = view.state.doc.toString();
 
-  const state = await getMergeState(props.projectId, props.fileName)
+  const state = await getMergeState(props.projectId, props.fileName);
   if (!state) {
-    return
+    return;
   }
-  await removeMergeState(props.projectId, props.fileName)
-  await updateState(props.projectId, props.fileName, state)
+  await removeMergeState(props.projectId, props.fileName);
+  await updateState(props.projectId, props.fileName, state);
 
-  view.setState(state)
+  view.setState(state);
   view.dispatch({
     changes: { from: 0, to: view.state.doc.length, insert: newContent },
-  })
+  });
 }
 
 async function abortMergeView() {
-  const state = await getMergeState(props.projectId, props.fileName)
+  const state = await getMergeState(props.projectId, props.fileName);
   if (state) {
-    view.setState(state)
-    await updateState(props.projectId, props.fileName, state)
-    await removeMergeState(props.projectId, props.fileName)
+    view.setState(state);
+    await updateState(props.projectId, props.fileName, state);
+    await removeMergeState(props.projectId, props.fileName);
   }
 }
 
 defineExpose({
   appendCode,
+  replaceCode,
   switchToMergeView,
   switchToEditView,
   abortMergeView,
-})
+});
 </script>
 
 <style>

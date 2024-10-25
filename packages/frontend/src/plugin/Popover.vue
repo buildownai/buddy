@@ -28,25 +28,36 @@
       </div>
       <div class="mt-4 flex justify-center space-x-3">
         <div
-          @click="confirm(false)"
+          v-if="popoverState.btnThreeValue !== undefined"
+          @click="resultValue(popoverState.btnThreeValue)"
+          class="px-5 py-2 border rounded text-slate-600 border-gray-300 hover:bg-gray-200 dark:text-slate-200 dark:border-gray-600 dark:hover:bg-gray-700 flex cursor-pointer"
+        >
+          <span
+            v-if="popoverState.btnThreeIcon"
+            class="material-icons-outlined w-6 h-6 mr-2"
+            >{{ popoverState.btnThreeIcon }}</span
+          ><span>{{ popoverState.btnThreeText }}</span>
+        </div>
+        <div
+          @click="resultValue(popoverState.btnTwoValue)"
           class="px-5 py-2 rounded text-slate-600 bg-gray-300 hover:bg-gray-400 dark:text-slate-200 dark:bg-gray-600 dark:hover:bg-gray-700 flex cursor-pointer"
         >
           <span
-            v-if="popoverState.noIcon"
+            v-if="popoverState.btnTwoIcon"
             class="material-icons-outlined w-6 h-6 mr-2"
-            >{{ popoverState.noIcon }}</span
-          ><span>{{ popoverState.noText }}</span>
+            >{{ popoverState.btnTwoIcon }}</span
+          ><span>{{ popoverState.btnTwoText }}</span>
         </div>
         <div
-          @click="confirm(true)"
+          @click="resultValue(popoverState.btnOneValue)"
           class="px-5 py-2 rounded flex text-slate-200 bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 cursor-pointer"
         >
           <span
-            v-if="popoverState.yesIcon"
+            v-if="popoverState.btnOneIcon"
             class="material-icons-outlined w-6 h-6 mr-2"
-            >{{ popoverState.yesIcon }}</span
+            >{{ popoverState.btnOneIcon }}</span
           >
-          {{ popoverState.yesText }}
+          {{ popoverState.btnOneText }}
         </div>
       </div>
     </div>
@@ -54,21 +65,33 @@
 </template>
 
 <script lang="ts" setup>
-interface PopoverState {
-  headline: string
-  message: string
-  yesText: string
-  noText: string
-  yesIcon?: string
-  noIcon?: string
-  icon: string
-  isVisible: boolean
-  callback: (response: boolean) => void
-}
+type PopoverState<
+  OneValueType = true,
+  TwoValueType = false,
+  ThreeValueType = undefined
+> = {
+  title: string;
+  message: string;
+  icon?: string;
+  btnOneText: string;
+  btnOneIcon?: string;
+  btnOneValue: OneValueType;
 
-const props = defineProps<{ popoverState: PopoverState }>()
+  btnTwoText: string;
+  btnTwoIcon: string;
+  btnTwoValue: TwoValueType;
 
-function confirm(response: boolean) {
-  props.popoverState.callback(response)
+  btnThreeText?: string;
+  btnThreeIcon?: string;
+  btnThreeValue?: ThreeValueType;
+
+  isVisible: boolean;
+  callback: (response: OneValueType | TwoValueType | ThreeValueType) => void;
+};
+
+const props = defineProps<{ popoverState: PopoverState }>();
+
+function resultValue(response: any) {
+  props.popoverState.callback(response);
 }
 </script>
