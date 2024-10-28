@@ -2,8 +2,6 @@
 
 **BuildOwn.AI Buddy** is a demonstration application showcasing how to build an AI-driven solution in TypeScript, leveraging **Ollama** for serving large language models.
 
-![Screenshot Video](./preview.mp4)
-
 https://github.com/user-attachments/assets/f6d700f0-ab9b-4154-bf51-d22f0f18bf25
 
 
