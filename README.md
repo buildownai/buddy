@@ -4,6 +4,10 @@
 
 ![Screenshot Video](./preview.mp4)
 
+https://github.com/user-attachments/assets/f6d700f0-ab9b-4154-bf51-d22f0f18bf25
+
+
+
 |   |   |
 |---|---|
 | The comprehensive and detailed explaination can be found in the book **Build Your Own AI**. | [![BuildOwn.AI](book.png)](https://buildown.ai) |
