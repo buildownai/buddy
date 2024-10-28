@@ -69,8 +69,12 @@ export const createBrowserEnv = async (projectId: string) => {
 };
 
 export const getBrowserEnv = (path: string) => {
+  try{
   env = createVirtualTypeScriptEnvironment(system, [path], ts, compilerOptions);
   return env;
+  }catch(err){
+    console.error(err)
+  }
 };
 
 export const putFile = (path: string, content: string) => {
