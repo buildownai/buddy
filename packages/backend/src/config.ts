@@ -18,7 +18,7 @@ const ConfigSchema = z.object({
   corsOrigin: z.string().default("*").describe("Allowed origins for CORS"),
   tempDir: z
     .string()
-    .default(path.join(os.tmpdir(), "pilot-repos"))
+    .default(path.join(os.tmpdir(), "buddy-repos"))
     .describe("Temporary directory for cloned repositories"),
   logLevel: z
     .string()
@@ -33,8 +33,8 @@ const ConfigSchema = z.object({
         .describe("SurrealDB connection URL"),
       user: z.string().default("root").describe("SurrealDB username"),
       pass: z.string().default("root").describe("SurrealDB password"),
-      database: z.string().default("pilot").describe("SurrealDB database name"),
-      namespace: z.string().default("pilot").describe("SurrealDB namespace"),
+      database: z.string().default("buddy").describe("SurrealDB database name"),
+      namespace: z.string().default("buddy").describe("SurrealDB namespace"),
     })
     .describe("SurrealDB configuration"),
   llm: z
@@ -115,9 +115,7 @@ const parseConfig = (): Config => {
       apiKey: process.env.OPENAI_API_KEY,
       embeddingSize: process.env.LLM_EMBEDDING_SIZE,
       ollamaEnabled:
-        process.env.OLLAMA_ENABLED?.trim().toLowerCase() === "true"
-          ? true
-          : false,
+        process.env.OLLAMA_ENABLED?.trim().toLowerCase() === "true",
       models: {
         chat: process.env.LLM_MODEL_CHAT,
         small: process.env.LLM_MODEL_SMALL,

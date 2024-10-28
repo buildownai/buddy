@@ -44,7 +44,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 app.doc31("/api/openapi.json", {
   openapi: "3.1.0",
   info: {
-    title: "BuildOwn.AI Pilot",
+    title: "BuildOwn.AI Buddy",
     version: "v1",
   },
   tags: [

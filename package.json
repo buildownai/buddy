@@ -1,5 +1,5 @@
 {
-  "name": "@buildownai/pilot",
+  "name": "@buildownai/buddy",
   "version": "1.0.0",
   "private": true,
   "description": "Showcase to build a AI driven IDE in the browser as an example from the book Build Your Own AI",
@@ -7,13 +7,11 @@
     "name": "Sebastian Wessel",
     "url": "https://buildown.ai"
   },
-  "repository": {
-    "url": "https://github.com/buildownai/pilot"
-  },
   "license": "CC BY-NC 4.0",
-  "workspaces": [
-    "packages/*"
-  ],
+  "repository": {
+    "url": "https://github.com/buildownai/buddy"
+  },
+  "workspaces": ["packages/*"],
   "type": "module",
   "scripts": {
     "start:frontend": "bun run --cwd packages/frontend dev",
@@ -28,7 +26,5 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4"
   },
-  "trustedDependencies": [
-    "@biomejs/biome"
-  ]
+  "trustedDependencies": ["@biomejs/biome"]
 }

@@ -2,7 +2,7 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import logger from "../../logger.js";
 import { convertHtmlToMarkdown } from "../convertHtmlToMarkdown.js";
-import { validateParams } from "./toolHelper.js";
+import { parseToolParameter } from "./toolHelper.js";
 
 const paramSchema = z.object({
   url: z.string().url().describe("The URL of the webpage to fetch"),
@@ -28,10 +28,10 @@ export const toolFetchWebpage = (_projectId: string) => {
   return {
     type: "function" as const,
     function: {
-      parse: JSON.parse,
-      function: async (input: unknown) => {
+      parse: parseToolParameter(paramSchema),
+      function: async (input: z.output<typeof paramSchema>) => {
         try {
-          const { url } = validateParams(paramSchema, input);
+          const { url } = input;
           const result = await fetch(url, {
             signal: AbortSignal.timeout(10_000),
           });
@@ -59,7 +59,7 @@ export const toolFetchWebpage = (_projectId: string) => {
         }
       },
       name: "fetch_webpage",
-      description: "Fetch the content of a webpage for given http(s) url",
+      description: "Fetch a webpage or make a HTTP request to external URLs",
       parameters: zodToJsonSchema(paramSchema) as any,
     },
   };

@@ -3,7 +3,7 @@ import zodToJsonSchema from "zod-to-json-schema";
 import { generateAnswer } from "../../llm/index.js";
 import logger from "../../logger.js";
 import { knowledgeRepository } from "../../repository/knowledge.js";
-import { validateParams } from "./toolHelper.js";
+import { parseToolParameter } from "./toolHelper.js";
 
 const paramSchema = z.object({
   searchQuery: z
@@ -15,10 +15,10 @@ export const knowledgeBase = (projectId: string) => {
   return {
     type: "function" as const,
     function: {
-      parse: JSON.parse,
-      function: async (input: unknown) => {
+      parse: parseToolParameter(paramSchema),
+      function: async (input: z.output<typeof paramSchema>) => {
         try {
-          const { searchQuery } = validateParams(paramSchema, input);
+          const { searchQuery } = input;
 
           const context = (
             await knowledgeRepository.findKnowledge(projectId, searchQuery)

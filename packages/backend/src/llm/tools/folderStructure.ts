@@ -4,8 +4,8 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { config } from "../../config.js";
 import logger from "../../logger.js";
-import type { ToolEntry } from "../../types/index.js";
-import { validateParams } from "./toolHelper.js";
+import { parseToolParameter } from "./toolHelper.js";
+import { getFolderStructure } from "../../helper/getFolderStructure.js";
 
 const paramSchema = z.object({
   path: z
@@ -19,51 +19,20 @@ export const toolGetFolderStructure = (projectId: string) => {
   return {
     type: "function" as const,
     function: {
-      parse: JSON.parse,
-      function: async (input: unknown) => {
+      parse: parseToolParameter(paramSchema),
+      function: async (input: z.output<typeof paramSchema>) => {
         try {
-          const { path } = validateParams(paramSchema, input);
+          const { path } = input;
           const p = join(config.tempDir, projectId, path);
-          let folderStructure = "";
 
-          const walk = (dir: string, indent = 0) => {
-            const files = readdirSync(dir);
-
-            for (const file of files) {
-              if (
-                [
-                  ".git",
-                  ".DS_Store",
-                  "node_modules",
-                  ".zed",
-                  ".vscode",
-                ].includes(file)
-              ) {
-                continue;
-              }
-              const f = join(dir, file);
-              const stat = statSync(f);
-              if (stat.isDirectory()) {
-                folderStructure += `${" ".repeat(
-                  indent
-                )}|- ${file} (directory)\n`;
-                walk(f, indent + 1);
-              } else {
-                folderStructure += `${" ".repeat(indent)}|- ${file} (file)\n`;
-              }
-            }
-          };
-
-          walk(p);
-
-          return folderStructure;
+          return getFolderStructure(p);
         } catch (err) {
           logger.error({ err, input }, "Wrong input in tool call read_file");
           return "Error: Sorry, but unable to read file";
         }
       },
       name: "get_folder_structure",
-      description: "Get folder structure",
+      description: "Read the folder structure",
       parameters: zodToJsonSchema(paramSchema) as any,
     },
   };

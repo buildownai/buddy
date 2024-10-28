@@ -145,5 +145,5 @@ Try to categorize the output in success or fail.
       name: 'step_agent',
       description: 'A list of steps in natural language which are executed sequentially by an llm',
       parameters: zodToJsonSchema(paramSchema) as any,
-    },,
+    },
 }

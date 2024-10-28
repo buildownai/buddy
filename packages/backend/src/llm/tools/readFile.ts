@@ -4,7 +4,7 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { config } from "../../config.js";
 import logger from "../../logger.js";
-import { validateParams } from "./toolHelper.js";
+import { parseToolParameter } from "./toolHelper.js";
 import { toolGetFolderStructure } from "./folderStructure.js";
 
 const paramSchema = z.object({
@@ -15,10 +15,10 @@ export const toolReadFile = (projectId: string) => {
   return {
     type: "function" as const,
     function: {
-      parse: JSON.parse,
-      function: async (input: unknown) => {
+      parse: parseToolParameter(paramSchema),
+      function: async (input: z.output<typeof paramSchema>) => {
         try {
-          const { path } = validateParams(paramSchema, input);
+          const { path } = input;
           const p = join(config.tempDir, projectId, path);
           const stat = statSync(p);
           if (stat.isFile()) {
@@ -45,7 +45,7 @@ ${result}
         }
       },
       name: "read_file",
-      description: "Get the file or directory content for a given path",
+      description: "Read the file or directory content for a given path",
       parameters: zodToJsonSchema(paramSchema) as any,
     },
   };

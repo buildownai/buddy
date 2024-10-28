@@ -43,37 +43,37 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { useRouter } from 'vue-router'
-import { AuthApi } from '../client/index.js'
-import { useTheme } from '../store/index.js'
+import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
+import { AuthApi } from "../client/index.js";
+import { useTheme } from "../store/index.js";
 
 export default defineComponent({
-  name: 'Topbar',
+  name: "Topbar",
   props: {
     title: {
       type: String,
-      default: 'BuildOwn.AI Pilot',
+      default: "BuildOwn.AI Buddy",
     },
   },
   setup() {
-    const router = useRouter()
+    const router = useRouter();
 
-    const { toggleDarkmode } = useTheme()
+    const { toggleDarkmode } = useTheme();
 
     const logout = async () => {
       try {
-        await AuthApi.logout()
-        router.push('/')
+        await AuthApi.logout();
+        router.push("/");
       } catch (error) {
-        console.error('Logout failed:', error)
+        console.error("Logout failed:", error);
       }
-    }
+    };
 
     return {
       toggleDarkmode,
       logout,
-    }
+    };
   },
-})
+});
 </script>

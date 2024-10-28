@@ -1,19 +1,26 @@
-import type { UnknownKeysParam, ZodRawShape, z } from 'zod'
-import logger from '../../logger.js'
+import type { UnknownKeysParam, ZodRawShape, ZodSchema, z } from "zod";
+import logger from "../../logger.js";
 
-export const validateParams = <K extends ZodRawShape, V extends UnknownKeysParam>(
-  schema: z.ZodObject<K, V>,
+export const validateParams = <T extends object>(
+  schema: z.ZodSchema<T>,
   input: unknown
-) => {
-  const s = schema
+): T => {
+  const s = schema;
 
-  const validation = s.safeParse(input)
+  const validation = s.safeParse(input);
   if (!validation.success) {
-    logger.error({ input }, 'invalid input')
+    logger.error({ input }, "invalid input");
     throw {
-      message: 'Invalid tool parameters provided',
+      message: "Invalid tool parameters provided",
       error: validation.error.message,
-    }
+    };
   }
-  return validation.data
-}
+  return validation.data;
+};
+
+export const parseToolParameter =
+  <T extends object>(paramSchema: ZodSchema<T>) =>
+  (input: string) => {
+    const parameter = JSON.parse(input);
+    return validateParams(paramSchema, parameter);
+  };

@@ -45,7 +45,7 @@
         <div class="font-light text-gray-300 dark:text-gray-700 text-5xl pt-6">
           &lt;{
         </div>
-        <div class="font-semibold">PILOT</div>
+        <div class="font-semibold">Buddy</div>
         <div class="font-light text-gray-300 dark:text-gray-700 text-5xl pt-6">
           }&gt;
         </div>
@@ -133,45 +133,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { AuthApi } from '../client/index.js'
-import { useTheme } from '../store/index.js'
+import { ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { AuthApi } from "../client/index.js";
+import { useTheme } from "../store/index.js";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const isLoading = ref(false)
-const isFormValid = ref(false)
+const email = ref("");
+const password = ref("");
+const error = ref("");
+const isLoading = ref(false);
+const isFormValid = ref(false);
 
-const { toggleDarkmode, isDarkmode } = useTheme()
+const { toggleDarkmode, isDarkmode } = useTheme();
 
 watch([email, password], ([newEmail, newPassword]) => {
-  isFormValid.value = newEmail.trim() !== '' && newPassword.trim() !== ''
-})
+  isFormValid.value = newEmail.trim() !== "" && newPassword.trim() !== "";
+});
 
 const handleSubmit = async () => {
-  if (!isFormValid.value) return
+  if (!isFormValid.value) return;
 
-  isLoading.value = true
-  error.value = ''
+  isLoading.value = true;
+  error.value = "";
 
   try {
-    const response = await AuthApi.login(email.value, password.value)
+    const response = await AuthApi.login(email.value, password.value);
 
     // Redirect to the originally requested page or default to ProjectOverview
     const redirectPath = (route.query.redirect as string) || {
-      name: 'ProjectOverview',
-    }
-    router.push(redirectPath)
+      name: "ProjectOverview",
+    };
+    router.push(redirectPath);
   } catch (err) {
-    error.value = 'Invalid email or password'
-    console.error('Login error:', err)
+    error.value = "Invalid email or password";
+    console.error("Login error:", err);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 </script>

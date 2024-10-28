@@ -5,18 +5,18 @@ import { toolGetFolderStructure } from "./folderStructure.js";
 import { getNpmPackageInfo } from "./getNpmPackageInfo.js";
 import { knowledgeBase } from "./knowledgeBase.js";
 import { toolReadFile } from "./readFile.js";
-//import { toolStepAgent } from "./stepAgent.js";
+import { toolStepAgent } from "./stepAgent.js";
 //import { toolWriteFile } from './writeFile.js'
 
 const tools = [
   toolReadFile,
-  //toolCheckIfFileExist,
-  //toolGetFolderStructure,
+  // toolCheckIfFileExist,
+  toolGetFolderStructure,
   //toolCreateDirectory,
   knowledgeBase,
   getNpmPackageInfo,
   toolFetchWebpage,
-  //toolStepAgent,
+  // toolStepAgent,
 ];
 
 export { tools };
