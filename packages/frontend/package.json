@@ -1,14 +1,24 @@
 {
   "name": "@buildownai/buddy-frontend",
   "version": "1.0.0",
+  "private": true,
+  "description": "The frontend for the Buddy Showcase of building an AI driven IDE in the browser as an example from the book Build Your Own AI",
+  "author": {
+    "name": "Sebastian Wessel",
+    "url": "https://buildown.ai"
+  },
+  "keywords": ["AI", "IDE", "Showcase", "typescript", "example", "browser", "llm"],
+  "homepage": "https://buildown.ai",
   "license": "CC BY-NC 4.0",
+  "repository": {
+    "url": "https://github.com/buildownai/buddy"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview"
   },
   "type": "module",
-  "private": true,
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/basic-setup": "^0.20.0",

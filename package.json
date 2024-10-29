@@ -7,6 +7,8 @@
     "name": "Sebastian Wessel",
     "url": "https://buildown.ai"
   },
+  "keywords": ["AI", "IDE", "Showcase", "typescript", "example", "browser", "llm"],
+  "homepage": "https://buildown.ai",
   "license": "CC BY-NC 4.0",
   "repository": {
     "url": "https://github.com/buildownai/buddy"
