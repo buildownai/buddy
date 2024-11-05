@@ -1,0 +1,8 @@
+PORT=3000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+LLM_MODEL_CHAT=buildownai/qwen7b:latest
+LLM_MODEL_SMALL=buildownai/qwen7b
+LLM_MODEL_CODE=buildownai/qwen7b
+LLM_MODEL_HTML=reader-lm:1.5b
+LLM_MODEL_EMBEDDINGS=nomic-embed-text:latest

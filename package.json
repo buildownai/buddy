@@ -19,7 +19,7 @@
     "start:frontend": "bun run --cwd packages/frontend dev",
     "start:backend": "bun run --cwd packages/backend start",
     "dev": "bun --watch packages/backend/src/index.ts & bun run start:frontend",
-    "model": "ollama create buildownai/qwen14b -f ./Modelfile",
+    "model": "ollama create buildownai/qwen7b -f ./Modelfile",
     "lint": "biome lint .",
     "format": "biome format . --write",
     "check": "biome check --write --unsafe .",

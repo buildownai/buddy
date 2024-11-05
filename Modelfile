@@ -1,2 +1,2 @@
-FROM qwen2.5:14b
+FROM qwen2.5-coder:latest
 PARAMETER num_ctx 32768
